@@ -2,7 +2,7 @@ FrankenSaT
 ==========
 [<img src="FrankenSaT_thumb.jpg" align="right"/>](FrankenSaT.jpg)
 
-FrankenSaT is abbreviation of <b>"Frankenstein" Satellite Tracker</b> - an affordable antenna rotator with Azimuth (pan) and optional Elevation (tilt) controlled by [Hamlib](https://github.com/Hamlib/Hamlib)'s _rotctld_ protocol. Why "Frankenstein"? Like the [creature of the same name](https://en.wikipedia.org/wiki/Frankenstein%27s_monster) in a [literary novel](https://en.wikipedia.org/wiki/Frankenstein), this project is ultimately ugly - both software and construction.
+FrankenSaT is abbreviation of <b>"Frankenstein" Satellite Tracker</b> - an affordable DIY antenna rotator with Azimuth (pan) and optional Elevation (tilt) controlled by [Hamlib](https://github.com/Hamlib/Hamlib)'s _rotctld_ protocol. Why "Frankenstein"? Like the [creature of the same name](https://en.wikipedia.org/wiki/Frankenstein%27s_monster) in a [literary novel](https://en.wikipedia.org/wiki/Frankenstein), this project is ultimately ugly - both software and construction part.
 
 # Advantages
 
@@ -27,6 +27,6 @@ FrankenSaT is abbreviation of <b>"Frankenstein" Satellite Tracker</b> - an affor
 # Credits for support
 
 * Ahmed Al Hafoudh - GitHub and robots
-* Jaroslav Stanko - SAT/DeSIqC devices
-* Ondrej Farkas - ham satellites orbital operation
+* Jaroslav Stanko OM1AJS - SAT/DeSIqC devices
+* Ondrej Farkas OM2FON - small satellites orbital construction and operation
 * [OM3KFF](https://om3kff.sk/) ham club - satellites observation operations
