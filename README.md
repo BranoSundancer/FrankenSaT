@@ -6,7 +6,7 @@ FrankenSaT is abbreviation of <b>"Frankenstein" Satellite Tracker</b> - an affor
 
 # Advantages
 
-* **Price**: It can be made by anyone who has an old satellite receiver with [OpenATV Enigma2](https://github.com/openatv/enigma2) in a drawer perhaps and a [DiSEqC](https://en.wikipedia.org/wiki/DiSEqC) motor for a satellite dish alignment. If not, both can be found on sale at a lower total price than many other antenna pan/tilt solutions. Other parts are just common hardware store items, often already owned in shed/garage.
+* **Price**: It can be made by anyone who has an old satellite receiver with [OpenATV Enigma2](https://github.com/openatv/enigma2) in a drawer and perhaps a [DiSEqC](https://en.wikipedia.org/wiki/DiSEqC) motor for a satellite dish alignment. If not, both can be found on sale at a lower total price than many other antenna pan/tilt solutions. Other parts are just common hardware store items, often already owned in shed/garage.
 * **Low skill requirement**: No need to solder, all electronics is already assembled in receiver. All you have to do is upload a Bash script to the receiver and you will get Azimuth motor control. The same script can also control second motor for Elevation.
 * Carrying capacity: usually at least 10 kg per motor. When using two motors, there are still several kg available for the antenna.
 * Weather proof motors by design.
