@@ -26,7 +26,7 @@ FrankenSaT is abbreviation of <b>"Frankenstein" Satellite Tracker</b> - an affor
 * Amiko Viper Combo (openATV 7.3)
 * _coming soon..._
 
-# Credits for support
+# Credits
 
 * [Ondrej Farkas](https://www.linkedin.com/in/ondrej-farkas-919b8519) OM2FON - small satellites orbital construction and operation support
 * [Ahmed Al Hafoudh](https://www.linkedin.com/in/alhafoudh) - GitHub and robots construction support
