@@ -23,3 +23,10 @@ FrankenSaT is abbreviation of <b>"Frankenstein" Satellite Tracker</b> - an affor
 
 * Amiko Viper Combo (openATV 7.3)
 * _coming soon..._
+
+# Credits for support
+
+* Ahmed Al Hafoudh - GitHub and robots
+* Jaroslav Stanko - SAT/DeSIqC devices
+* Ondrej Farkas - ham satellites orbital operation
+* OM3KFF ham club - satellites observation operations
