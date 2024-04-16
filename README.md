@@ -1,9 +1,7 @@
 FrankenSaT
 ==========
-
+<img src="FrankenSaT.jpg" align="right">
 FrankenSaT is abbreviation of <b>"Frankenstein" Satellite Tracker</b>. Why "Frankenstein"? Like the [creature of the same name](https://en.wikipedia.org/wiki/Frankenstein%27s_monster) in a [literary novel](https://en.wikipedia.org/wiki/Frankenstein), this project is ultimately ugly - both software and construction.
-
-![Image](FrankenSaT.jpg)
 
 # Advantages
 
