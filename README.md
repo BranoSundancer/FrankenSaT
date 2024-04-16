@@ -10,7 +10,7 @@ FrankenSaT is abbreviation of <b>"Frankenstein" Satellite Tracker</b> - an affor
 * **Low skill requirement**: No need to solder, all electronics is already assembled in the receiver. You just is upload a Bash script to the receiver and you will get Azimuth motor control. The same script can also control second motor for Elevation.
 * **Carrying capacity**: usually at least 10 kg per motor. When using two motors (one carries the second one), there are still several kg available for the antenna.
 * **Weather proof**: motors are designed to outdoor mount.
-* **Optimal for "cliff" mount**: angular span 150-180° of many motors seems to be enough for Azimuth rotation in such situations (like balcony). However, it is also possible to dynamically adjust the observation per every overflight: the center of the Azimuth motor position should point to Azimuth with maximum Elevation and the same value should be set to FrankenSaT, which recalculates the right Azimuth for that specific observation.
+* **Optimal for "cliff" mount**: angular span 150-160° of many motors seems to be enough for Azimuth rotation in such situations (like balcony). However, it is also possible to dynamically adjust the observation per every overflight: the center of the Azimuth motor position should point to Azimuth with maximum Elevation and the same value should be set to FrankenSaT, which recalculates the right Azimuth for that specific observation.
 
 # Limitations
 [<img src="motors_thumb.jpg" alt="Azimuth and Elevation motors connected together" title="Azimuth and Elevation motors connected together" align="right"/>](motors.jpg)
