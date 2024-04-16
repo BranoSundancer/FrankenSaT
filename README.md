@@ -12,9 +12,9 @@ FrankenSaT is abbreviation of <b>"Frankenstein" Satellite Tracker</b> - an affor
 * Weather proof motors by design.
 * Optimal for "cliff" mount: angular span 150-180° of many motors seems to be enough for Azimuth rotation in such situations (like balcony). However, it is also possible to dynamically adjust the observation per every overflight: the center of the Azimuth motor position should point to Azimuth with maximum Elevation and the same value should be set to FrankenSaT, which recalculates the right Azimuth for that specific observation.
 
-# Disadvantages
+# Limitations
 
-* Total weight: approx. 3 kg per motor + antenna + stand.
+* Total weight and dimensions: approx. 3 kg per motor + antenna + stand.
 * Satellite rotor shaft is (usually?) not straight but angled (35°, but maybe also other angles) - this must be compensated/tolerated while engineering construction.
 * Some motors are not fast enough to track objects in higher Elevation, however those could be still usable for Elevation control.
 * Some motors have too narrow angular span (like 90° instead of 160°), however those are still usable for Elevation control.
