@@ -1,6 +1,6 @@
 FrankenSaT
 ==========
-[<img src="FrankenSaT_thumb.jpg" align="right"/>](FrankenSaT.jpg)
+[<img src="FrankenSaT_thumb.jpg" alt="FrankenSaT" title="FrankenSaT" align="right"/>](FrankenSaT.jpg)
 
 FrankenSaT is abbreviation of <b>"Frankenstein" Satellite Tracker</b> - an affordable DIY antenna rotator with Azimuth (pan) and optional Elevation (tilt) controlled by [Hamlib](https://github.com/Hamlib/Hamlib)'s _rotctld_ protocol. Why "Frankenstein"? Like the [creature of the same name](https://en.wikipedia.org/wiki/Frankenstein%27s_monster) in a [literary novel](https://en.wikipedia.org/wiki/Frankenstein), this project is ultimately ugly - both software and construction part.
 
@@ -13,7 +13,7 @@ FrankenSaT is abbreviation of <b>"Frankenstein" Satellite Tracker</b> - an affor
 * Optimal for "cliff" mount: angular span 150-180° of many motors seems to be enough for Azimuth rotation in such situations (like balcony). However, it is also possible to dynamically adjust the observation per every overflight: the center of the Azimuth motor position should point to Azimuth with maximum Elevation and the same value should be set to FrankenSaT, which recalculates the right Azimuth for that specific observation.
 
 # Limitations
-[<img src="motors_thumb.jpg" align="right"/>](motors.jpg)
+[<img src="motors_thumb.jpg" alt="Azimuth and Elevation motors connected together" title="Azimuth and Elevation motors connected together" align="right"/>](motors.jpg)
 
 * Total weight and dimensions: approx. 3 kg per motor + antenna + stand.
 * Satellite rotor shaft is (usually?) not straight but angled (35°, but maybe also other angles) - this must be compensated/tolerated while engineering construction.
