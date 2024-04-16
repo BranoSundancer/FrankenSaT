@@ -14,7 +14,7 @@ FrankenSaT is abbreviation of <b>"Frankenstein" Satellite Tracker</b> - an affor
 
 # Disadvantages
 
-* Total weight: approximatelly 3 kg per motor + antenna.
+* Total weight: approx. 3 kg per motor + antenna + stand.
 * Satellite rotor shaft are not straight but angled (35°? all of them?) - this must be compensated/tolerated while engineering construction.
 * Some motors are not fast enough to track objects in higher Elevation, however those could be still usable for Elevation control.
 * Some motors have too narrow angular span (like 90° instead of 160°), however those are still usable for Elevation control.
