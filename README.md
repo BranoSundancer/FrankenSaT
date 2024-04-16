@@ -16,7 +16,7 @@ FrankenSaT is abbreviation of <b>"Frankenstein" Satellite Tracker</b> - an affor
 [<img src="motors_thumb.jpg" alt="Azimuth and Elevation motors connected together" title="Azimuth and Elevation motors connected together" align="right"/>](motors.jpg)
 
 * Total weight and dimensions: approx. 3 kg per motor + antenna + stand.
-* Satellite rotor shaft is (usually?) not straight but angled (35°, maybe other angles too) - this must be compensated/tolerated while engineering construction.
+* Satellite rotor shaft is (usually?) not straight but angled (35°, maybe other angles too) - this must be compensated/tolerated while construction engineering.
 * Some motors are not fast enough to track objects in higher Elevation, however those could be still usable for Elevation control.
 * Some motors have too narrow angular span (like 90° instead of 160°), however those are still usable for Elevation control.
 
@@ -27,7 +27,7 @@ FrankenSaT is abbreviation of <b>"Frankenstein" Satellite Tracker</b> - an affor
 
 # Credits for support
 
-* [Ondrej Farkas](https://www.linkedin.com/in/ondrej-farkas-919b8519) OM2FON - small satellites orbital construction and operation
-* [Ahmed Al Hafoudh](https://www.linkedin.com/in/alhafoudh) - GitHub support and robots construction
-* [OM3KFF](https://om3kff.sk/) ham club members - satellites observation support
+* [Ondrej Farkas](https://www.linkedin.com/in/ondrej-farkas-919b8519) OM2FON - small satellites orbital construction and operation support
+* [Ahmed Al Hafoudh](https://www.linkedin.com/in/alhafoudh) - GitHub and robots construction support
+* [OM3KFF](https://om3kff.sk/) ham club members - satellites observation and communication support
 * Jaroslav Stanko OM1AJS - SAT/DiSEqC devices support
