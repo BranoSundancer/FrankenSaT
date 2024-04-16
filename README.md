@@ -1,6 +1,6 @@
 FrankenSaT
 ==========
-<img src="FrankenSaT.jpg" align="right"/>
+<img src="FrankenSaT_thumb.jpg" align="right"/>
 
 FrankenSaT is abbreviation of <b>"Frankenstein" Satellite Tracker</b> - an affordable antenna rotator with Azimuth (pan) and optional Elevation (tilt) controlled by [Hamlib](https://github.com/Hamlib/Hamlib)'s _rotctld_ protocol. Why "Frankenstein"? Like the [creature of the same name](https://en.wikipedia.org/wiki/Frankenstein%27s_monster) in a [literary novel](https://en.wikipedia.org/wiki/Frankenstein), this project is ultimately ugly - both software and construction.
 
