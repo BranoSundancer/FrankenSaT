@@ -1,7 +1,7 @@
 #!/bin/bash
 # FrankenSaT - "Frankenstein" Satellite Tracker
 # Author: Branislav Vartik
-# Version: 1.0
+# Version: 1.1
 
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd $SCRIPTDIR
@@ -38,7 +38,8 @@ fi
 
 if [ "$MODE" != "interpreter" ] ; then
 	. frankensat.conf
-	INITSEQUENCE="exit exit exit exit exit exit blue up up up right down down down down ok exit down down ok up up"
+	# Zero all digits, especially tenths, since we ill use only whole numbers
+	INITSEQUENCE="exit exit exit exit exit exit blue up up up right down down down down ok exit down down ok up up 0 0 0 0"
 	debug -n "Checking API availability: "
 	while ! ./openwebif_remote.sh $AZHOST powerstate | grep -q instandby.*false ; do echo -n . ; sleep 1 ; done
 	debug "Ready."
@@ -87,7 +88,7 @@ if [ "$MODE" != "listener" ] ; then
 			if [ "$AZROT" -ne "$AZOLD" ] ; then
 				debug "AZMOTOR: $AZROT/$AZMAX (AZCENTER:$AZCENTER)"
 				AZROT=$(printf '%03d\n' "$AZROT")
-				./openwebif_remote.sh $AZHOST left left left ${AZROT:0:1} ${AZROT:1:1} ${AZROT:2:1} 0 yellow | grep -v issued >&2
+				./openwebif_remote.sh $AZHOST left left left ${AZROT:0:1} ${AZROT:1:1} ${AZROT:2:1} yellow | grep -v issued >&2
 				AZOLD=$AZROT
 			fi
 			if [ -n "$ELHOST" ] ; then
@@ -99,7 +100,7 @@ if [ "$MODE" != "listener" ] ; then
 				if [ "$ELROT" -ne "$ELOLD" ] ; then
 					debug "ELMOTOR: $ELROT/$ELMAX (ELCENTER:$ELCENTER)"
 					ELROT=$(printf '%03d\n' "$ELROT")
-					./openwebif_remote.sh $ELHOST left left left ${ELROT:0:1} ${ELROT:1:1} ${ELROT:2:1} 0 yellow | grep -v issued >&2
+					./openwebif_remote.sh $ELHOST left left left ${ELROT:0:1} ${ELROT:1:1} ${ELROT:2:1} yellow | grep -v issued >&2
 					ELOLD=$ELROT
 				fi
 			fi
