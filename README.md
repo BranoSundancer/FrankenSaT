@@ -27,7 +27,7 @@ FrankenSaT is abbreviation of <b>"Frankenstein" Satellite Tracker</b> - an affor
 
 # Credits for support
 
-* [Ahmed Al Hafoudh](https://www.linkedin.com/in/alhafoudh) - GitHub support and robots construction
-* Jaroslav Stanko OM1AJS - SAT/DeSIqC devices support
 * [Ondrej Farkas](https://www.linkedin.com/in/ondrej-farkas-919b8519) OM2FON - small satellites orbital construction and operation
+* [Ahmed Al Hafoudh](https://www.linkedin.com/in/alhafoudh) - GitHub support and robots construction
 * [OM3KFF](https://om3kff.sk/) ham club members - satellites observation support
+* Jaroslav Stanko OM1AJS - SAT/DiSEqC devices support
