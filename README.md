@@ -11,6 +11,7 @@ FrankenSaT is abbreviation of <b>"Frankenstein" Satellite Tracker</b> - an affor
 * **Carrying capacity**: usually at least 10 kg per motor. When using two motors (one carries the second one), there are still several kg available for the antenna.
 * **Weather proof**: motors are designed to outdoor mount.
 * **Optimal for "cliff" mount**: angular span 150-160° of many motors seems to be enough for Azimuth rotation in such situations (like balcony). However, it is also possible to dynamically adjust the observation per every overflight: the center of the Azimuth motor position should point to Azimuth with maximum Elevation and the same value should be set to FrankenSaT, which recalculates the right Azimuth for that specific observation.
+* **No damage**: No irreversible modification of devices is needed. When you don't need the rotator anymore, you can use the receiver(s) and motor(s) for TV again.
 
 # Limitations
 [<img src="motors_thumb.jpg" alt="Azimuth and Elevation motors connected together" title="Azimuth and Elevation motors connected together" align="right"/>](motors.jpg)
