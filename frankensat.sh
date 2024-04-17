@@ -20,8 +20,8 @@ function send() {
 }
 
 function vfd() {
-#	[ -n "$VFDDEV" ] && echo $1 > $VFDDEV && echo $1 > /dev/shm/vfd
-	[ -n "$VFDDEV" ] && echo $1 > /dev/shm/vfd
+	[ -n "$VFDDEV" ] && echo $1 > $VFDDEV && echo $1 > /dev/shm/vfd
+#	[ -n "$VFDDEV" ] && echo $1 > /dev/shm/vfd
 }
 
 
@@ -39,14 +39,14 @@ else
 	MODE=interpreter
 fi
 
-trap 'sleep 1 ; jobs -pr | grep -q ^ && kill $(jobs -pr)' SIGINT SIGTERM EXIT
+trap 'jobs -pr | grep -q ^ && sleep 1 && kill $(jobs -pr)' SIGINT SIGTERM EXIT
 # First parameter overrides Azimuth center from configuration file - usable for portable operation
 [ -n "$1" ] && AZCENTER=$1
 if [ "$MODE" != "interpreter" ] ; then
 	. frankensat.conf
 	# check if VFDDEV really exists and launch override subprocess
 	vfd FSAT
-	[ -n "$VFDDEV" ] && [ -e "$VFDDEV" ] && while sleep 0.3 ; do cat < /dev/shm/vfd > $VFDDEV ; done &
+	[ -n "$VFDDEV" ] && [ -e "$VFDDEV" ] && while sleep 0.5 ; do cat < /dev/shm/vfd > $VFDDEV ; done &
 	debug -n "Waiting for OpenWebif availability: "
 	while ! ./openwebif_remote.sh $AZHOST powerstate | grep -q instandby.*false ; do debug -n . ; sleep 1 ; done
 	debug "Ready."
@@ -89,7 +89,7 @@ if [ "$MODE" != "listener" ] ; then
 			# FIXME: Probably must be both lines send in single packet, otherwise gpredict decodes it as ERROR
 			# Workaround " " according to https://adventurist.me/posts/0136
 			send " "
-			vfd A$AZINT
+			[ -n "$ELHOST" ] && grep -q "^A$AZINT\$" /dev/shm/vfd && vfd E$ELINT || vfd A$AZINT
 			;;
 		P)
 			send "RPRT 0"
@@ -133,10 +133,10 @@ if [ "$MODE" != "listener" ] ; then
 			exit
 			;;
 		*)
-			debug "UNKNOWN: $*"
+			debug "UNKNOWN COMMAND"
 			send "RPRT 0"
 			;;
 		esac
 	done
+	vfd DISC
 fi
-vfd FEND
