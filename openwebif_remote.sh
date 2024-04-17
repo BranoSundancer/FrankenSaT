@@ -1,6 +1,7 @@
 #!/bin/bash
-
+# OpenWebif Remote
 # Author: Branislav Vartik
+# Version: 1.1
 
 HOST=$1
 API=/api/
@@ -62,7 +63,7 @@ for cmd in $* ; do
 		;;
 	esac
 	if [ -n "$COMMAND" ] ; then
-		echo -e "GET $API$COMMAND HTTP/1.0\r\n\r" | nc -w 2 $HOST 80 | grep -m 1 -A 99 '^[[:space:]]*$' | grep -vE '^(\{|\}| "result": true|[[:space:]]*$)'
+		echo -e "GET $API$COMMAND HTTP/1.0\r\n\r" | nc -w 2 $HOST 80 2> /dev/null | grep -m 1 -A 99 '^[[:space:]]*$' | grep -vE '^(\{|\}| "result": true|[[:space:]]*$)'
 # NetCat is twice faster than wget
 #	       wget -T 3 -t 1 -qO - "http://$HOST$API$COMMAND" | grep -vE '^(\{|\}| "result": true)'
 	fi

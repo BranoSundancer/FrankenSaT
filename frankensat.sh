@@ -1,7 +1,7 @@
 #!/bin/bash
 # FrankenSaT - "Frankenstein" Satellite Tracker
 # Author: Branislav Vartik
-# Version: 1.1
+# Version: 1.2
 
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd $SCRIPTDIR
@@ -19,6 +19,12 @@ function send() {
 	echo -e "$*"
 }
 
+function vfd() {
+#	[ -n "$VFDDEV" ] && echo $1 > $VFDDEV && echo $1 > /dev/shm/vfd
+	[ -n "$VFDDEV" ] && echo $1 > /dev/shm/vfd
+}
+
+
 # Detect operation mode
 if [ "$1" = "-i" ] ; then
 	# When Azimuth center does not change we can run forever with static config
@@ -33,29 +39,35 @@ else
 	MODE=interpreter
 fi
 
+trap 'sleep 1 ; jobs -pr | grep -q ^ && kill $(jobs -pr)' SIGINT SIGTERM EXIT
 # First parameter overrides Azimuth center from configuration file - usable for portable operation
 [ -n "$1" ] && AZCENTER=$1
-
 if [ "$MODE" != "interpreter" ] ; then
 	. frankensat.conf
+	# check if VFDDEV really exists and launch override subprocess
+	vfd FSAT
+	[ -n "$VFDDEV" ] && [ -e "$VFDDEV" ] && while sleep 0.3 ; do cat < /dev/shm/vfd > $VFDDEV ; done &
+	debug -n "Waiting for OpenWebif availability: "
+	while ! ./openwebif_remote.sh $AZHOST powerstate | grep -q instandby.*false ; do debug -n . ; sleep 1 ; done
+	debug "Ready."
 	# Zero all digits, especially tenths, since we ill use only whole numbers
 	INITSEQUENCE="exit exit exit exit exit exit blue up up up right down down down down ok exit down down ok up up 0 0 0 0"
-	debug -n "Checking API availability: "
-	while ! ./openwebif_remote.sh $AZHOST powerstate | grep -q instandby.*false ; do echo -n . ; sleep 1 ; done
-	debug "Ready."
+	vfd INIT
 	debug -n "Initializing Azimuth motor: "
 	./openwebif_remote.sh $AZHOST $INITSEQUENCE | grep -v issued
 	debug "Done."
 	if [ -n "$ELHOST" ] ; then
+		vfd EINI
 		debug -n "Initializing Elevation motor: "
 		./openwebif_remote.sh $ELHOST $INITSEQUENCE | grep -v issued
 		debug "Done."
 	fi
 	if [ "$MODE" = "listener" ] ; then
 		# start rotctld emulator
+		vfd LIST
 		debug -n "Waiting for connection: "
-		export AZHOST AZCENTER AZMAX ELHOST ELCENTER ELMAX
-		nc -ll -p 4533 -e $0
+		export AZHOST AZCENTER AZMAX ELHOST ELCENTER ELMAX VFDDEV
+		nc -l -p 4533 -e $0
 	fi
 fi
 if [ "$MODE" != "listener" ] ; then
@@ -65,6 +77,7 @@ if [ "$MODE" != "listener" ] ; then
 	AZOLD=-1
 	ELOLD=-1
 
+	vfd CONN
 	debug "Connected."
 	while read line ; do
 		line=$(echo "$line" | tr -d '\r')
@@ -76,11 +89,14 @@ if [ "$MODE" != "listener" ] ; then
 			# FIXME: Probably must be both lines send in single packet, otherwise gpredict decodes it as ERROR
 			# Workaround " " according to https://adventurist.me/posts/0136
 			send " "
+			vfd A$AZINT
 			;;
 		P)
 			send "RPRT 0"
 			AZ=$(printf "%.6f" $(echo "$line" | cut -d " " -f 2 | tr , .))
-			AZROT=$((${AZ%.*}+AZMAX/2-AZCENTER))
+			AZINT=${AZ%.*}
+			vfd A$AZINT
+			AZROT=$((AZINT+AZMAX/2-AZCENTER))
 			[ $AZROT -ge 360 ] && AZROT=$((AZROT-360))
 			[ $AZROT -lt 0 ] && AZROT=$((360+AZROT))
 			[ $AZROT -gt 180 ] && AZROT=0
@@ -93,7 +109,9 @@ if [ "$MODE" != "listener" ] ; then
 			fi
 			if [ -n "$ELHOST" ] ; then
 				EL=$(printf "%.6f" $(echo "$line" | cut -d " " -f 3 | tr , .))
-				ELROT=$((${EL%.*}+ELMAX/2-ELCENTER))
+				ELINT=${EL%.*}
+				vfd E$ELINT
+				ELROT=$((ELINT+ELMAX/2-ELCENTER))
 				[ $ELROT -lt 0 ] && ELROT=0
 				[ $ELROT -gt 90 ] && ELROT=90
 				[ $ELROT -gt $ELMAX ] && ELROT=$ELMAX
@@ -107,9 +125,11 @@ if [ "$MODE" != "listener" ] ; then
 			;;
 		S)
 			send "RPRT 0"
+			vfd STOP
 			;;
 		q)
 			send "RPRT 0"
+			vfd QUIT
 			exit
 			;;
 		*)
@@ -119,3 +139,4 @@ if [ "$MODE" != "listener" ] ; then
 		esac
 	done
 fi
+vfd FEND
