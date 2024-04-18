@@ -10,7 +10,7 @@
 ### END INIT INFO
 
 # Author: Branislav Vartik
-# Version: 1.4
+# Version: 1.5
 
 trap 'jobs -pr | grep -q ^ && kill $(jobs -pr)' SIGINT SIGTERM EXIT
 SCRIPTDIR="$( cd "$( dirname "$(realpath ${BASH_SOURCE[0]})" )" && pwd )"
@@ -44,7 +44,7 @@ init() {
 	# check if VFDDEV really exists and launch override subprocess
 	vfd FSAT
 	[ -n "$VFDDEV" ] && [ -e "$VFDDEV" ] && while sleep 0.5 ; do cat < $VFDFILE > $VFDDEV ; done &
-	debug -n "Waiting for OpenWebif availability: "
+	debug -n "Waiting for Azimuth motor OpenWebif availability: "
 	while ! ./openwebif_remote.sh $AZHOST powerstate | grep -q instandby.*false ; do debug -n . ; sleep 1 ; done
 	debug "Ready."
 	vfd INIT
@@ -53,6 +53,9 @@ init() {
 	debug "Done."
 	if [ -n "$ELHOST" ] ; then
 		vfd EINI
+		debug -n "Waiting for Elevation motor OpenWebif availability: "
+		while ! ./openwebif_remote.sh $ELHOST powerstate | grep -q instandby.*false ; do debug -n . ; sleep 1 ; done
+		debug "Ready."
 		debug -n "Initializing Elevation motor: "
 		./openwebif_remote.sh $ELHOST $ELINIT | grep -v issued
 		debug "Done."
