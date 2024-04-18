@@ -13,9 +13,10 @@
 # Version: 1.5
 
 trap 'jobs -pr | grep -q ^ && kill $(jobs -pr)' SIGINT SIGTERM EXIT
-SCRIPTDIR="$( cd "$( dirname "$(realpath ${BASH_SOURCE[0]})" )" && pwd )"
+SCRIPTREAL=$(realpath ${BASH_SOURCE[0]})
+SCRIPTDIR="$( cd "$( dirname "$SCRIPTREAL" )" && pwd )"
 cd $SCRIPTDIR
-SCRIPTNAME="${BASH_SOURCE[0]##*/}"
+SCRIPTNAME="${SCRIPTREAL##*/}"
 [ -z $PARENT ] && PARENT="$(ps -o comm= $PPID)"
 CONFFILE=frankensat.conf
 VFDFILE=/var/run/vfd
