@@ -10,13 +10,15 @@
 ### END INIT INFO
 
 # Author: Branislav Vartik
-# Version: 1.3
+# Version: 1.4
 
 trap 'jobs -pr | grep -q ^ && kill $(jobs -pr)' SIGINT SIGTERM EXIT
 SCRIPTDIR="$( cd "$( dirname "$(realpath ${BASH_SOURCE[0]})" )" && pwd )"
 cd $SCRIPTDIR
 SCRIPTNAME="${BASH_SOURCE[0]##*/}"
 [ -z $PARENT ] && PARENT="$(ps -o comm= $PPID)"
+CONFFILE=frankensat.conf
+VFDFILE=/var/run/vfd
 
 debug() {
 	# display only if not headless
@@ -33,27 +35,26 @@ send() {
 }
 
 vfd() {
-	[ -n "$VFDDEV" ] && echo $1 > $VFDDEV && echo $1 > /dev/shm/vfd
+	[ -n "$VFDDEV" ] && echo $1 > $VFDDEV && echo $1 > $VFDFILE
 }
 
 init() {
-	. frankensat.conf
+	[ ! -e $CONFFILE ] && [ -e $CONFFILE.dist ] && cp -va $CONFFILE.dist $CONFFILE
+	. $CONFFILE
 	# check if VFDDEV really exists and launch override subprocess
 	vfd FSAT
-	[ -n "$VFDDEV" ] && [ -e "$VFDDEV" ] && while sleep 0.5 ; do cat < /dev/shm/vfd > $VFDDEV ; done &
+	[ -n "$VFDDEV" ] && [ -e "$VFDDEV" ] && while sleep 0.5 ; do cat < $VFDFILE > $VFDDEV ; done &
 	debug -n "Waiting for OpenWebif availability: "
 	while ! ./openwebif_remote.sh $AZHOST powerstate | grep -q instandby.*false ; do debug -n . ; sleep 1 ; done
 	debug "Ready."
-	# Zero all digits, especially tenths, since we ill use only whole numbers
-	INITSEQUENCE="exit exit exit exit exit exit blue up up up right down down down down ok exit down down ok up up 0 0 0 0"
 	vfd INIT
 	debug -n "Initializing Azimuth motor: "
-	./openwebif_remote.sh $AZHOST $INITSEQUENCE | grep -v issued
+	./openwebif_remote.sh $AZHOST $AZINIT | grep -v issued
 	debug "Done."
 	if [ -n "$ELHOST" ] ; then
 		vfd EINI
 		debug -n "Initializing Elevation motor: "
-		./openwebif_remote.sh $ELHOST $INITSEQUENCE | grep -v issued
+		./openwebif_remote.sh $ELHOST $ELINIT | grep -v issued
 		debug "Done."
 	fi
 }
@@ -85,7 +86,7 @@ interpret() {
 			# FIXME: Probably must be both lines send in single packet, otherwise gpredict decodes it as ERROR
 			# workaround " " according to https://adventurist.me/posts/0136
 			send " "
-			[ -n "$ELHOST" ] && grep -q "^A$AZINT\$" /dev/shm/vfd && vfd E$ELINT || vfd A$AZINT
+			[ -n "$ELHOST" ] && grep -q "^A$AZINT\$" $VFDFILE && vfd E$ELINT || vfd A$AZINT
 			;;
 		P)
 			send "RPRT 0"
