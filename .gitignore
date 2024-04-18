@@ -1,1 +1,5 @@
 frankensat.conf
+# Ignore vim files:
+*~
+*.swp
+*.swo
