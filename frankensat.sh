@@ -1,48 +1,42 @@
 #!/bin/bash
-# FrankenSaT - "Frankenstein" Satellite Tracker
+
+### BEGIN INIT INFO
+# Provides: frankensat
+# Default-Start:  2345
+# Default-Stop:   016
+# Short-Description: FrankenSaT
+# Description: FrankenSaT - "Frankenstein" Satellite Tracker
+#              https://github.com/BranoSundancer/FrankenSaT
+### END INIT INFO
+
 # Author: Branislav Vartik
-# Version: 1.2
+# Version: 1.3
 
-SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+trap 'jobs -pr | grep -q ^ && kill $(jobs -pr)' SIGINT SIGTERM EXIT
+SCRIPTDIR="$( cd "$( dirname "$(realpath ${BASH_SOURCE[0]})" )" && pwd )"
 cd $SCRIPTDIR
+SCRIPTNAME="${BASH_SOURCE[0]##*/}"
+[ -z $PARENT ] && PARENT="$(ps -o comm= $PPID)"
 
-function debug() {
-	if [ "$MODE" != "inetd" ] ; then
+debug() {
+	# display only if not headless
+	if [ "$PARENT" != "init" ] ; then
 		FIRST=$1
 		shift
 		echo $FIRST "$*" >&2
 	fi
 }
 
-function send() {
+send() {
 	debug "SEND: $*"
 	echo -e "$*"
 }
 
-function vfd() {
+vfd() {
 	[ -n "$VFDDEV" ] && echo $1 > $VFDDEV && echo $1 > /dev/shm/vfd
-#	[ -n "$VFDDEV" ] && echo $1 > /dev/shm/vfd
 }
 
-
-# Detect operation mode
-if [ "$1" = "-i" ] ; then
-	# When Azimuth center does not change we can run forever with static config
-	# echo "4533 stream tcp nowait root /home/root/frankensat.sh frankensat.sh -i" >> /etc/inetd.conf ; /etc/init.d/inetd.busybox restart
-	MODE=inetd
-	shift
-elif [ -z $AZCENTER ] ; then
-	# Normal mode
-	MODE=listener
-else
-	# Interprets rotctl client commands after connect
-	MODE=interpreter
-fi
-
-trap 'jobs -pr | grep -q ^ && sleep 1 && kill $(jobs -pr)' SIGINT SIGTERM EXIT
-# First parameter overrides Azimuth center from configuration file - usable for portable operation
-[ -n "$1" ] && AZCENTER=$1
-if [ "$MODE" != "interpreter" ] ; then
+init() {
 	. frankensat.conf
 	# check if VFDDEV really exists and launch override subprocess
 	vfd FSAT
@@ -62,15 +56,17 @@ if [ "$MODE" != "interpreter" ] ; then
 		./openwebif_remote.sh $ELHOST $INITSEQUENCE | grep -v issued
 		debug "Done."
 	fi
-	if [ "$MODE" = "listener" ] ; then
-		# start rotctld emulator
-		vfd LIST
-		debug -n "Waiting for connection: "
-		export AZHOST AZCENTER AZMAX ELHOST ELCENTER ELMAX VFDDEV
-		nc -l -p 4533 -e $0
-	fi
-fi
-if [ "$MODE" != "listener" ] ; then
+}
+
+listen() {
+	# start rotctld listener
+	vfd LIST
+	debug -n "Waiting for connection: "
+	export AZHOST AZCENTER AZMAX ELHOST ELCENTER ELMAX VFDDEV PARENT
+	nc -l -p 4533 -e $0 interpret
+}
+
+interpret() {
 	# rotctl interpreter
 	AZ=0.000000
 	EL=0.000000
@@ -87,7 +83,7 @@ if [ "$MODE" != "listener" ] ; then
 		p)
 			# send "$AZ\n$EL"
 			# FIXME: Probably must be both lines send in single packet, otherwise gpredict decodes it as ERROR
-			# Workaround " " according to https://adventurist.me/posts/0136
+			# workaround " " according to https://adventurist.me/posts/0136
 			send " "
 			[ -n "$ELHOST" ] && grep -q "^A$AZINT\$" /dev/shm/vfd && vfd E$ELINT || vfd A$AZINT
 			;;
@@ -130,6 +126,7 @@ if [ "$MODE" != "listener" ] ; then
 		q)
 			send "RPRT 0"
 			vfd QUIT
+			sleep 0.5
 			exit
 			;;
 		*)
@@ -139,4 +136,52 @@ if [ "$MODE" != "listener" ] ; then
 		esac
 	done
 	vfd DISC
-fi
+	debug "Disconnected."
+	sleep 0.5
+}
+
+shopt -s extglob
+case "$1" in
+	start)
+		echo -n "Starting $SCRIPTNAME: "
+		# FIXME: PIDFILE needed for -x option
+		start-stop-daemon -S -b $SCRIPTDIR/$SCRIPTNAME daemon
+		echo "Done."
+		;;
+	stop)
+		echo -n "Stopping $SCRIPTNAME: "
+		# FIXME: PIDFILE needed
+		echo "Not implemented yet."
+		;;
+	install)
+		ln -vsf $SCRIPTDIR/$SCRIPTNAME /etc/init.d/
+		update-rc.d $SCRIPTNAME defaults
+		;;
+	uninstall)
+		rm -vf /etc/init.d/${SCRIPTNAME##*/}
+		update-rc.d $SCRIPTNAME remove
+		;;
+	[0-9]*)
+		init
+		# First parameter overrides Azimuth center from configuration file - usable for portable operation
+		[ -n "$1" ] && AZCENTER=$1
+		listen
+		;;
+	daemon)
+		init
+		while true ; do listen ; sleep 0.5 ; done
+		;;
+	interpret)
+		interpret
+		;;
+	*)
+		echo "Usage: $SCRIPTNAME {start|stop|install|uninstall|<nnn>}"
+		echo "       start: start service in background"
+		echo "       stop: stop service in background"
+		echo "       install: install service for autostart"
+		echo "       uninstall: uninstall service for autostart"
+		echo "       nnn: override Azimuth center and run once in foreground"
+		;;
+esac
+shopt -u extglob
+exit 0
