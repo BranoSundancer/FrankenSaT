@@ -12,14 +12,21 @@
 # Author: Branislav Vartik
 # Version: 1.5
 
-trap 'jobs -pr | grep -q ^ && kill $(jobs -pr)' SIGINT SIGTERM EXIT
 SCRIPTREAL=$(realpath ${BASH_SOURCE[0]})
 SCRIPTDIR="$( cd "$( dirname "$SCRIPTREAL" )" && pwd )"
 cd $SCRIPTDIR
 SCRIPTNAME="${SCRIPTREAL##*/}"
 [ -z $PARENT ] && PARENT="$(ps -o comm= $PPID)"
 CONFFILE=frankensat.conf
+PIDFILE=/var/run/frankensat.pid
 VFDFILE=/var/run/vfd
+
+killtree() {
+	for child in $(pgrep -P $1) ; do
+		killtree $child
+	done
+	[ -z "$2" ] && kill $1
+}
 
 debug() {
 	# display only if not headless
@@ -39,12 +46,15 @@ vfd() {
 	[ -n "$VFDDEV" ] && echo $1 > $VFDDEV && echo $1 > $VFDFILE
 }
 
-init() {
+init_conf() {
 	[ ! -e $CONFFILE ] && [ -e $CONFFILE.dist ] && cp -va $CONFFILE.dist $CONFFILE
 	. $CONFFILE
 	# check if VFDDEV really exists and launch override subprocess
 	vfd FSAT
 	[ -n "$VFDDEV" ] && [ -e "$VFDDEV" ] && while sleep 0.5 ; do cat < $VFDFILE > $VFDDEV ; done &
+}
+
+init_moto() {
 	debug -n "Waiting for Azimuth motor OpenWebif availability: "
 	while ! ./openwebif_remote.sh $AZHOST powerstate | grep -q instandby.*false ; do debug -n . ; sleep 1 ; done
 	debug "Ready."
@@ -69,6 +79,7 @@ listen() {
 	debug -n "Waiting for connection: "
 	export AZHOST AZCENTER AZMAX ELHOST ELCENTER ELMAX VFDDEV PARENT
 	nc -l -p 4533 -e $0 interpret
+	echo $?
 }
 
 interpret() {
@@ -148,15 +159,22 @@ interpret() {
 shopt -s extglob
 case "$1" in
 	start)
-		echo -n "Starting $SCRIPTNAME: "
-		# FIXME: PIDFILE needed for -x option
-		start-stop-daemon -S -b $SCRIPTDIR/$SCRIPTNAME daemon
-		echo "Done."
+		if [ -e /proc/$(<$PIDFILE)/status ] ; then
+			echo "Already running."
+		else
+			echo -n "Starting $SCRIPTNAME: "
+			start-stop-daemon -S -b -m -p $PIDFILE $SCRIPTDIR/$SCRIPTNAME daemon
+			echo "Done."
+		fi
 		;;
 	stop)
-		echo -n "Stopping $SCRIPTNAME: "
-		# FIXME: PIDFILE needed
-		echo "Not implemented yet."
+		if [ -e /proc/$(<$PIDFILE)/status ] ; then
+			echo -n "Stopping $SCRIPTNAME: "
+			killtree $(<$PIDFILE) 2> /dev/null
+			echo "Done."
+		else
+			echo "Not running."
+		fi
 		;;
 	install)
 		ln -vsf $SCRIPTDIR/$SCRIPTNAME /etc/init.d/
@@ -167,14 +185,21 @@ case "$1" in
 		update-rc.d $SCRIPTNAME remove
 		;;
 	[0-9]*)
-		init
-		# First parameter overrides Azimuth center from configuration file - usable for portable operation
-		[ -n "$1" ] && AZCENTER=$1
-		listen
+		if [ -e /proc/$(<$PIDFILE)/status ] ; then
+			echo "Already running."
+		else
+			echo $$ > $PIDFILE
+			init_conf
+			# First parameter overrides Azimuth center from configuration file - usable for portable operation
+			[ -n "$1" ] && AZCENTER=$1
+			#init_moto
+			listen > /dev/null
+		fi
 		;;
 	daemon)
-		init
-		while true ; do listen ; sleep 0.5 ; done
+		init_conf
+		#init_moto
+		while [ $(listen) = "0" ] ; do sleep 0.5 ; done
 		;;
 	interpret)
 		interpret
