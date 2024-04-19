@@ -10,7 +10,7 @@
 ### END INIT INFO
 
 # Author: Branislav Vartik
-# Version: 1.6
+# Version: 1.7
 
 SCRIPTREAL=$(realpath ${BASH_SOURCE[0]})
 SCRIPTDIR="$( cd "$( dirname "$SCRIPTREAL" )" && pwd )"
@@ -101,19 +101,20 @@ interpret() {
 			# FIXME: Probably must be both lines send in single packet, otherwise gpredict decodes it as ERROR
 			# workaround " " according to https://adventurist.me/posts/0136
 			send " "
-			[ -n "$ELHOST" ] && grep -q "^A$AZINT\$" $VFDFILE && vfd E$ELINT || vfd A$AZINT
+			[ -n "$ELHOST" ] && grep -q "^$AZINTVFD\$" $VFDFILE && vfd $ELINTVFD || vfd $AZINTVFD
 			;;
 		P)
 			send "RPRT 0"
 			AZ=$(printf "%.6f" $(echo "$line" | cut -d " " -f 2 | tr , .))
 			AZINT=${AZ%.*}
-			vfd A$AZINT
 			AZROT=$((AZINT+AZMAX/2-AZCENTER))
 			[ $AZROT -ge 360 ] && AZROT=$((AZROT-360))
 			[ $AZROT -lt 0 ] && AZROT=$((360+AZROT))
 			[ $AZROT -gt 180 ] && AZROT=0
 			[ $AZROT -gt $AZMAX ] && AZROT=$AZMAX
 			if [ "$AZROT" -ne "$AZOLD" ] ; then
+				AZINTVFD=A$(printf '%03d\n' "$AZINT")
+				vfd $AZINTVFD
 				debug "AZMOTOR: $AZROT/$AZMAX (AZCENTER:$AZCENTER)"
 				AZROT=$(printf '%03d\n' "$AZROT")
 				./openwebif_remote.sh $AZHOST left left left ${AZROT:0:1} ${AZROT:1:1} ${AZROT:2:1} yellow | grep -v issued >&2
@@ -122,12 +123,13 @@ interpret() {
 			if [ -n "$ELHOST" ] ; then
 				EL=$(printf "%.6f" $(echo "$line" | cut -d " " -f 3 | tr , .))
 				ELINT=${EL%.*}
-				vfd E$ELINT
 				ELROT=$((ELINT+ELMAX/2-ELCENTER))
 				[ $ELROT -lt 0 ] && ELROT=0
 				[ $ELROT -gt 90 ] && ELROT=90
 				[ $ELROT -gt $ELMAX ] && ELROT=$ELMAX
 				if [ "$ELROT" -ne "$ELOLD" ] ; then
+					ELINTVFD=E$(printf '%03d\n' "$ELINT")
+					vfd $ELINTVFD
 					debug "ELMOTOR: $ELROT/$ELMAX (ELCENTER:$ELCENTER)"
 					ELROT=$(printf '%03d\n' "$ELROT")
 					./openwebif_remote.sh $ELHOST left left left ${ELROT:0:1} ${ELROT:1:1} ${ELROT:2:1} yellow | grep -v issued >&2
@@ -156,25 +158,37 @@ interpret() {
 	sleep 0.5
 }
 
+start() {
+	if [ -e /proc/$(<$PIDFILE)/status ] ; then
+		echo "Already running."
+	else
+		echo -n "Starting $SCRIPTNAME: "
+		start-stop-daemon -S -b -m -p $PIDFILE $SCRIPTDIR/$SCRIPTNAME daemon
+		echo "Done."
+	fi
+}
+
+stop() {
+	echo -n "Stopping $SCRIPTNAME: "
+	killtree $(<$PIDFILE) 2> /dev/null
+	echo "Done."
+}
+
 shopt -s extglob
 case "$1" in
 	start)
-		if [ -e /proc/$(<$PIDFILE)/status ] ; then
-			echo "Already running."
-		else
-			echo -n "Starting $SCRIPTNAME: "
-			start-stop-daemon -S -b -m -p $PIDFILE $SCRIPTDIR/$SCRIPTNAME daemon
-			echo "Done."
-		fi
+		start
 		;;
 	stop)
 		if [ -e /proc/$(<$PIDFILE)/status ] ; then
-			echo -n "Stopping $SCRIPTNAME: "
-			killtree $(<$PIDFILE) 2> /dev/null
-			echo "Done."
+			stop
 		else
 			echo "Not running."
 		fi
+		;;
+	restart)
+		[ -e /proc/$(<$PIDFILE)/status ] && stop
+		start
 		;;
 	install)
 		ln -vsf $SCRIPTDIR/$SCRIPTNAME /etc/init.d/
