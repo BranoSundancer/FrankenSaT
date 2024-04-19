@@ -208,12 +208,14 @@ case "$1" in
 			[ -n "$1" ] && AZCENTER=$1
 			init_motors
 			listen > /dev/null
+			killtree $$ parent 2> /dev/null
 		fi
 		;;
 	daemon)
 		init_conf
 		init_motors
 		while [ $(listen) = "0" ] ; do sleep 0.5 ; done
+		killtree $$ parent 2> /dev/null
 		;;
 	interpret)
 		interpret
