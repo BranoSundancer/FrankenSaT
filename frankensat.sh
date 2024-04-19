@@ -1,16 +1,19 @@
 #!/bin/bash
-
+#
+# FrankenSaT - "Frankenstein" Satellite Tracker
+# https://github.com/BranoSundancer/FrankenSaT
+#
+# Author: Branislav Vartik
+#
+# See LICENSE for licensing information.
+#
 ### BEGIN INIT INFO
 # Provides: frankensat
 # Default-Start:  2345
 # Default-Stop:   016
 # Short-Description: FrankenSaT
-# Description: FrankenSaT - "Frankenstein" Satellite Tracker
-#              https://github.com/BranoSundancer/FrankenSaT
+# Description: "Frankenstein" Satellite Tracker
 ### END INIT INFO
-
-# Author: Branislav Vartik
-# Version: 1.7
 
 SCRIPTREAL=$(realpath ${BASH_SOURCE[0]})
 SCRIPTDIR="$( cd "$( dirname "$SCRIPTREAL" )" && pwd )"
@@ -138,6 +141,7 @@ interpret() {
 			fi
 			;;
 		S)
+			# Dummy functonality, in fact we can't stop motors
 			send "RPRT 0"
 			vfd STOP
 			;;
@@ -148,7 +152,7 @@ interpret() {
 			exit
 			;;
 		*)
-			debug "UNKNOWN COMMAND"
+			debug "UNIMPLEMENTED"
 			send "RPRT 0"
 			;;
 		esac
