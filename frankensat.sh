@@ -66,10 +66,11 @@ init_motors() {
 	./openwebif_remote.sh $AZHOST $AZINIT | grep -v issued
 	debug "Done."
 	if [ -n "$ELHOST" ] ; then
-		vfd EINI
+		vfd EFST
 		debug -n "Waiting for Elevation motor OpenWebif availability: "
 		while ! ./openwebif_remote.sh $ELHOST powerstate | grep -q instandby.*false ; do debug -n . ; sleep 1 ; done
 		debug "Ready."
+		vfd EINI
 		debug -n "Initializing Elevation motor: "
 		./openwebif_remote.sh $ELHOST $ELINIT | grep -v issued
 		debug "Done."
