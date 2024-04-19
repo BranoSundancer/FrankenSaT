@@ -10,7 +10,7 @@
 ### END INIT INFO
 
 # Author: Branislav Vartik
-# Version: 1.5
+# Version: 1.6
 
 SCRIPTREAL=$(realpath ${BASH_SOURCE[0]})
 SCRIPTDIR="$( cd "$( dirname "$SCRIPTREAL" )" && pwd )"
@@ -54,7 +54,7 @@ init_conf() {
 	[ -n "$VFDDEV" ] && [ -e "$VFDDEV" ] && while sleep 0.5 ; do cat < $VFDFILE > $VFDDEV ; done &
 }
 
-init_moto() {
+init_motors() {
 	debug -n "Waiting for Azimuth motor OpenWebif availability: "
 	while ! ./openwebif_remote.sh $AZHOST powerstate | grep -q instandby.*false ; do debug -n . ; sleep 1 ; done
 	debug "Ready."
@@ -192,13 +192,13 @@ case "$1" in
 			init_conf
 			# First parameter overrides Azimuth center from configuration file - usable for portable operation
 			[ -n "$1" ] && AZCENTER=$1
-			#init_moto
+			init_motors
 			listen > /dev/null
 		fi
 		;;
 	daemon)
 		init_conf
-		#init_moto
+		init_motors
 		while [ $(listen) = "0" ] ; do sleep 0.5 ; done
 		;;
 	interpret)
