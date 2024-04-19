@@ -24,7 +24,7 @@ FrankenSaT is abbreviation of <b>"Frankenstein" Satellite Tracker</b> - an affor
 # Tested receivers
 
 * Amiko Viper Combo (openATV 7.3)
-* Show Box VITAMIN HD 5000 (openATV 5.1 / EAGLE) - everything works except the motor init
+* Show Box VITAMIN HD 5000 (openATV 5.1 / EAGLE)
 
 # Credits
 
