@@ -2,6 +2,7 @@
 #
 # FrankenSaT - "Frankenstein" Satellite Tracker
 # https://github.com/BranoSundancer/FrankenSaT
+# Version: 1.8
 #
 # Author: Branislav Vartik
 #
@@ -19,10 +20,13 @@ SCRIPTREAL=$(realpath ${BASH_SOURCE[0]})
 SCRIPTDIR="$( cd "$( dirname "$SCRIPTREAL" )" && pwd )"
 cd $SCRIPTDIR
 SCRIPTNAME="${SCRIPTREAL##*/}"
+BASENAME="${SCRIPTNAME%.*}"
+CONFFILE="$BASENAME.conf"
+CONFRUNFILE="/var/run/$CONFFILE"
+PIDFILE="/var/run/$BASENAME.pid"
+VFDFILE="/var/run/$BASENAME.vfd"
+HTTPLOGFILE="$BASENAME.log"
 [ -z $PARENT ] && PARENT="$(ps -o comm= $PPID)"
-CONFFILE=frankensat.conf
-PIDFILE=/var/run/frankensat.pid
-VFDFILE=/var/run/vfd
 
 killtree() {
 	for child in $(pgrep -P $1) ; do
@@ -46,15 +50,23 @@ send() {
 }
 
 vfd() {
-	[ -n "$VFDDEV" ] && echo $1 > $VFDDEV && echo $1 > $VFDFILE
+	[ -n "$VFDDEV" ] && echo "$1" >"$VFDDEV" && echo "$1" >"$VFDFILE"
+}
+
+update_conf() {
+	sed -ri "s/^($2=)(.+)$/\1$3/" "$1"
 }
 
 init_conf() {
-	[ ! -e $CONFFILE ] && [ -e $CONFFILE.dist ] && cp -va $CONFFILE.dist $CONFFILE
-	. $CONFFILE
+	[ ! -e "$CONFFILE" ] && [ -e "$CONFFILE.dist" ] && cp -va "$CONFFILE.dist" "$CONFFILE"
+	[ "$1" = "override" ] || [ ! -e "$CONFRUNFILE" ] && cp -a "$CONFFILE" "$CONFRUNFILE"
+	. "$CONFRUNFILE"
+}
+
+init_vfd() {
 	# check if VFDDEV really exists and launch override subprocess
 	vfd FSAT
-	[ -n "$VFDDEV" ] && [ -e "$VFDDEV" ] && while sleep 0.5 ; do cat < $VFDFILE > $VFDDEV ; done &
+	[ -n "$VFDDEV" ] && [ -e "$VFDDEV" ] && while sleep 0.5 ; do cat <$VFDFILE >$VFDDEV ; done &
 }
 
 init_motors() {
@@ -81,13 +93,15 @@ listen() {
 	# start rotctld listener
 	vfd LIST
 	debug -n "Waiting for connection: "
-	export AZHOST AZCENTER AZMAX ELHOST ELCENTER ELMAX VFDDEV PARENT
+	#export AZHOST AZCENTER AZMAX ELHOST ELCENTER ELMAX # VFDDEV PARENT
 	nc -l -p 4533 -e $0 interpret
 	echo $?
 }
 
 interpret() {
 	# rotctl interpreter
+	trap init_conf USR1
+	init_conf
 	AZ=0.000000
 	EL=0.000000
 	AZOLD=-1
@@ -175,64 +189,236 @@ start() {
 
 stop() {
 	echo -n "Stopping $SCRIPTNAME: "
-	killtree $(<$PIDFILE) 2> /dev/null
+	killtree $(<$PIDFILE) 2>/dev/null
 	echo "Done."
 }
 
+http_response() {
+	echo "HTTP/1.0 $HTTP_CODE ${HTTP_RESPONSE[$HTTP_CODE]}"
+	if [ $HTTP_CODE = 302 ] ; then
+		echo "Location: /"
+	fi
+	echo "Connection: close"
+	if [[ $HTTP_CODE != 2* ]] ; then
+		echo
+	       	echo "${HTTP_RESPONSE[$HTTP_CODE]}"
+	fi
+}
+
 shopt -s extglob
-case "$1" in
-	start)
-		start
-		;;
-	stop)
-		if [ -e /proc/$(<$PIDFILE)/status ] ; then
-			stop
-		else
-			echo "Not running."
-		fi
-		;;
-	restart)
-		[ -e /proc/$(<$PIDFILE)/status ] && stop
-		start
-		;;
-	install)
-		ln -vsf $SCRIPTDIR/$SCRIPTNAME /etc/init.d/
-		update-rc.d $SCRIPTNAME defaults
-		;;
-	uninstall)
-		rm -vf /etc/init.d/${SCRIPTNAME##*/}
-		update-rc.d $SCRIPTNAME remove
-		;;
-	[0-9]*)
-		if [ -e /proc/$(<$PIDFILE)/status ] ; then
-			echo "Already running."
-		else
-			echo $$ > $PIDFILE
-			init_conf
-			# First parameter overrides Azimuth center from configuration file - usable for portable operation
-			[ -n "$1" ] && AZCENTER=$1
+if [ "$PARENT" = "inetd" ] || [ "$1" = "inetd" ] ; then
+	# inetd is our HTTP listener, install with:
+	# echo "8080 stream tcp nowait root /home/root/frankensat.sh" >> /etc/inetd.conf ; /etc/init.d/inetd.busybox restart
+	init_conf
+	declare -a HTTP_RESPONSE=([200]="OK" [302]="Found" [404]="Not Found")
+	line=foo
+	while [ "$line" != "" ] ; do
+		read -r line
+		line=${line%%$'\r'}
+		[ "$REQUEST" = "" ] && REQUEST=$line
+	done
+	REQUEST_URI=$(echo "$REQUEST" | cut -d " " -f 2)
+	REMOTE_ADDR=$(netstat -tenp 2>/dev/null | sed -nr "s/^[^ ]+ +[^ ]+ +[^ ]+ +[^ ]+ +([0-9\.]+):.+ $$\/.+$/\1/p")
+	URI=(${REQUEST_URI//\// })
+	HTTP_CODE=302
+	case ${URI[0]} in
+		restart)
+			./frankensat.sh restart >/dev/null 2>&1
+			http_response
+			;;
+		reboot)
+			[ -n "$ELHOST" ] && ./openwebif_remote.sh $ELHOST reboot >/dev/null 2>&1
+			./openwebif_remote.sh localhost reboot >/dev/null 2>&1
+			http_response
+			;;
+		shutdown)
+			[ -n "$ELHOST" ] && ./openwebif_remote.sh $ELHOST shutdown >/dev/null 2>&1
+			./openwebif_remote.sh localhost shutdown >/dev/null 2>&1
+			http_response
+			;;
+		conf)
+			update_conf "$CONFRUNFILE" "${URI[1]}" "${URI[2]}"
+			INTERPRET=$(grep -l '/bin/bash$' $(grep -l '^interpret$' /proc/*/cmdline 2>/dev/null) 2>/dev/null | cut -d/ -f 3)
+			[ -n "$INTERPRET" ] && kill -USR1 $INTERPRET
+			http_response
+			;;
+		"")
+			HTTP_CODE=200
+			http_response
+			cat <<'EOF'
+Content-Type: text/html; charset=utf-8
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>FrankenSaT</title>
+</head>
+<style>
+body { font-size: 30px; }
+a { text-decoration: none; color: red; }
+a:hover { text-decoration: underline; }
+#compass {
+  position: relative;
+  width: 700px;
+  height: 700px;
+  /* the radius of .item (half height or width) */
+  margin: 60px;
+}
+#compass .point {
+  width: 120px;
+  height: 120px;
+  line-height: 120px;
+  text-align: center;
+  border-radius: 100%;
+  position: absolute;
+  background: #8f8;
+  font-size: 40px;
+}
+#compass .inner-compass {
+  position: absolute;
+  width: 350px;
+  height: 350px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+#compass .inner-compass .point {
+  background: #ccc;
+}
+#compass .center-point {
+  width: 140px;
+  height: 140px;
+  line-height: 140px;
+  text-align: center;
+  border-radius: 50%;
+  position: absolute;
+  background: #8f8;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 40px;
+}
+</style>
+</head>
+<body>
+<center>
+Current AZCENTER:
+EOF
+			echo "$AZCENTER&deg;"
+			cat <<'EOF'
+<br><br>
+<div id="compass">
+EOF
+			for i in 90 113 135 158 180 203 225 248 270 293 315 338 0 23 45 68 ; do
+				echo "<div class=\"point\"><a href=\"/conf/AZCENTER/$i\"><div>$i&deg;</div></a></div>"
+			done
+			cat <<'EOF'
+  <div class="inner-compass">
+    <div class="point">E</div>
+    <div class="point">SE</div>
+    <div class="point">S</div>
+    <div class="point">SW</div>
+    <div class="point">W</div>
+    <div class="point">NW</div>
+    <div class="point">N</div>
+    <div class="point">NE</div>
+  </div>
+  <div class="center-point">SET</div>
+</div>
+<br>
+[<a href="/restart">Restart service</a>] [<a href="/reboot">Reboot device(s)</a>] [<a href="/shutdown">Shutdown device(s)</a>]
+</center>
+<script type="text/javascript">
+<!--
+function calcCircle(a) {
+  for (var i = 0; i < a.length; i++) {
+    var container = a[i].parentElement,
+      width = container.offsetWidth,
+      height = container.offsetHeight,
+      radius = width / 2,
+      step = (2 * Math.PI) / a.length;
+
+    var x = width / 2 + radius * Math.cos(step * i) - a[i].offsetWidth / 2;
+    var y = height / 2 + radius * Math.sin(step * i) - a[i].offsetHeight / 2;
+
+    a[i].style.left = x + 'px';
+    a[i].style.top = y + 'px';
+  }
+}
+calcCircle(document.querySelectorAll('#compass > .point'));
+calcCircle(document.querySelectorAll('#compass > .inner-compass > .point'));
+// Source: https://stackoverflow.com/questions/40426442/how-to-align-html-table-cells-as-circle/40427480#40427480
+-->
+</script>
+</body>
+</html>
+EOF
+			;;
+		*)
+			HTTP_CODE=404
+			http_response
+			;;
+	esac
+	echo "$REMOTE_ADDR - - [$(date +'%d/%b/%Y:%H:%M:%S %z')] \"$REQUEST\" $HTTP_CODE 0" >>$HTTPLOGFILE
+else
+	# interactive or daemon
+	case "$1" in
+		start)
+			start
+			;;
+		stop)
+			if [ -e /proc/$(<$PIDFILE)/status ] ; then
+				stop
+			else
+				echo "Not running."
+			fi
+			;;
+		restart)
+			[ -e /proc/$(<$PIDFILE)/status ] && stop
+			sleep 0.5
+			start
+			;;
+		install)
+			ln -vsf $SCRIPTDIR/$SCRIPTNAME /etc/init.d/
+			update-rc.d $SCRIPTNAME defaults
+			;;
+		uninstall)
+			rm -vf /etc/init.d/${SCRIPTNAME##*/}
+			update-rc.d $SCRIPTNAME remove
+			;;
+		[0-9]*)
+			if [ -e /proc/$(<$PIDFILE)/status ] ; then
+				echo "Already running."
+			else
+				echo $$ >$PIDFILE
+				init_conf override
+				init_vfd
+				# First parameter overrides Azimuth center from configuration file - usable for portable operation
+				[ -n "$1" ] && update_conf "$CONFRUNFILE" AZCENTER "$1"
+				init_motors
+				listen >/dev/null
+				killtree $$ parent 2>/dev/null
+			fi
+			;;
+		daemon)
+			init_conf override
+			init_vfd
 			init_motors
-			listen > /dev/null
-			killtree $$ parent 2> /dev/null
-		fi
-		;;
-	daemon)
-		init_conf
-		init_motors
-		while [ $(listen) = "0" ] ; do sleep 0.5 ; done
-		killtree $$ parent 2> /dev/null
-		;;
-	interpret)
-		interpret
-		;;
-	*)
-		echo "Usage: $SCRIPTNAME {start|stop|install|uninstall|<nnn>}"
-		echo "       start: start service in background"
-		echo "       stop: stop service in background"
-		echo "       install: install service for autostart"
-		echo "       uninstall: uninstall service for autostart"
-		echo "       nnn: override Azimuth center and run once in foreground"
-		;;
-esac
+			while [ "$(listen)" = "0" ] ; do sleep 0.5 ; done
+			killtree $$ parent 2>/dev/null
+			;;
+		interpret)
+			interpret
+			;;
+		*)
+			echo "Usage: $SCRIPTNAME {start|stop|install|uninstall|<nnn>}"
+			echo "       start: start service in background"
+			echo "       stop: stop service in background"
+			echo "       install: install service for autostart"
+			echo "       uninstall: uninstall service for autostart"
+			echo "       nnn: override Azimuth center and run once in foreground"
+			;;
+	esac
+fi
 shopt -u extglob
 exit 0
