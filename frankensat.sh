@@ -296,21 +296,18 @@ a:hover { text-decoration: underline; }
   text-align: center;
   border-radius: 50%;
   position: absolute;
-  /* background: #8f8; */
+  background: #f88;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-size: 120px;
+  font-size: 40px;
 }
 </style>
 </head>
 <body>
 <center>
-Current AZCENTER:
-EOF
-			echo "$AZCENTER&deg;"
-			cat <<'EOF'
-<br><br>
+Current AZCENTER:<br>
+<br>
 <div id="compass">
 EOF
 			for i in 90 113 135 158 180 203 225 248 270 293 315 338 0 23 45 68 ; do
@@ -327,7 +324,12 @@ EOF
     <div class="point">N</div>
     <div class="point">NE</div>
   </div>
-  <div class="center-point">&#129517;</div>
+  <div class="center-point">
+EOF
+			echo "$AZCENTER&deg;"
+			cat <<'EOF'
+  </div>
+  <!-- <div class="center-point" style="font-size: 120px;">&#129517;</div> -->
 </div>
 <br>
 [<a href="/restart">Restart service</a>] [<a href="/reboot">Reboot device(s)</a>] [<a href="/shutdown">Shutdown device(s)</a>]
