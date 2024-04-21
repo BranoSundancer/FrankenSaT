@@ -93,7 +93,6 @@ listen() {
 	# start rotctld listener
 	vfd LIST
 	debug -n "Waiting for connection: "
-	#export AZHOST AZCENTER AZMAX ELHOST ELCENTER ELMAX # VFDDEV PARENT
 	nc -l -p 4533 -e $0 interpret
 	echo $?
 }
@@ -178,7 +177,7 @@ interpret() {
 }
 
 start() {
-	if [ -e /proc/$(<$PIDFILE)/status ] ; then
+	if [ -e "$PIDFILE" ] && [ -e "/proc/$(<$PIDFILE)/status" ] ; then
 		echo "Already running."
 	else
 		echo -n "Starting $SCRIPTNAME: "
@@ -373,14 +372,14 @@ else
 			start
 			;;
 		stop)
-			if [ -e /proc/$(<$PIDFILE)/status ] ; then
+			if [ -e "$PIDFILE" ] && [ -e "/proc/$(<$PIDFILE)/status" ] ; then
 				stop
 			else
 				echo "Not running."
 			fi
 			;;
 		restart)
-			[ -e /proc/$(<$PIDFILE)/status ] && stop
+			[ -e "$PIDFILE" ] && [ -e "/proc/$(<$PIDFILE)/status" ] && stop
 			sleep 0.5
 			start
 			;;
@@ -393,7 +392,7 @@ else
 			update-rc.d $SCRIPTNAME remove
 			;;
 		[0-9]*)
-			if [ -e /proc/$(<$PIDFILE)/status ] ; then
+			if [ -e "$PIDFILE" ] && [ -e "/proc/$(<$PIDFILE)/status" ] ; then
 				echo "Already running."
 			else
 				echo $$ >$PIDFILE
