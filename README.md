@@ -34,4 +34,4 @@ FrankenSaT is abbreviation of <b>"Frankenstein" Satellite Tracker</b> - an affor
 * Jaroslav Stanko OM1AJS - SAT/DiSEqC devices support
 * [Icons8](https://icons8.com/) - favicon
 
-[__Per Aspera Ad Astra__](https://simple.wikipedia.org/wiki/Per_aspera_ad_astra)
+[*Per Aspera Ad Astra*](https://simple.wikipedia.org/wiki/Per_aspera_ad_astra)
