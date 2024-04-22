@@ -37,7 +37,7 @@ killtree() {
 
 debug() {
 	# display only if not headless
-	if [ "$PARENT" != "init" ] ; then
+	if [ -z $HEADLESS ] ; then
 		FIRST=$1
 		shift
 		echo $FIRST "$*" >&2
@@ -58,8 +58,9 @@ update_conf() {
 }
 
 init_conf() {
-	[ ! -e "$CONFFILE" ] && [ -e "$CONFFILE.dist" ] && cp -va "$CONFFILE.dist" "$CONFFILE"
-	[ "$1" = "override" ] || [ ! -e "$CONFRUNFILE" ] && cp -a "$CONFFILE" "$CONFRUNFILE"
+	[ "$PARENT" = "init" ] || [ "$PARENT" = "inetd" ] && HEADLESS=1
+	[ ! -e "$CONFFILE" ] && [ -e "$CONFFILE.dist" ] && debug $(cp -vf "$CONFFILE.dist" "$CONFFILE")
+	[ "$1" = "override" ] || [ ! -e "$CONFRUNFILE" ] && cp -f "$CONFFILE" "$CONFRUNFILE"
 	. "$CONFRUNFILE"
 }
 
