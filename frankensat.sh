@@ -475,6 +475,8 @@ else
 			echo "  install: install service for autostart"
 			echo "  uninstall: uninstall service for autostart"
 			echo "  nnn: override Azimuth center and run once in foreground"
+			echo "  conf: update running config, example:"
+			echo "        $SCRIPTNAME conf AZCENTER 123"
 			echo "  openwebif: access to OpenWebif API (remote keypress and power), examples:"
 			echo "          $SCRIPTNAME openwebif azhost red exit up 0 ok menu"
 			echo "          $SCRIPTNAME openwebif elhost shutdown"
