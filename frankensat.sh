@@ -60,7 +60,7 @@ update_conf() {
 	sed -ri "s/^($2=)(.+)$/\1$3/" "$1"
 }
 
-openwebif_remote() {
+openwebif() {
 	local REMOTEHOST="$AZHOST"
 	local REMOTEPORT="$AZPORT"
 	local COMMAND=
@@ -70,7 +70,7 @@ openwebif_remote() {
 	fi
 	shift
 	for cmd in $* ; do
-		echo -n "openwebif_remote: $cmd "
+		echo -n "openwebif: $cmd "
 		COMMAND=
 		if [ ${OPENWEBIFREMOTEKEYS[$cmd]} ] ; then
 			COMMAND="remotecontrol?command=${OPENWEBIFREMOTEKEYS[$cmd]}"
@@ -118,20 +118,20 @@ init_vfd() {
 
 init_motors() {
 	debug -n "Waiting for Azimuth motor OpenWebif availability: "
-	while ! openwebif_remote azhost powerstate | grep -q instandby.*false ; do debug -n . ; sleep 1 ; done
+	while ! openwebif azhost powerstate | grep -q instandby.*false ; do debug -n . ; sleep 1 ; done
 	debug "Ready."
 	vfd INIT
 	debug -n "Initializing Azimuth motor: "
-	openwebif_remote azhost $AZINIT | grep -v issued
+	openwebif azhost $AZINIT | grep -v issued
 	debug "Done."
 	if [ -n "$ELHOST" ] ; then
 		vfd EFST
 		debug -n "Waiting for Elevation motor OpenWebif availability: "
-		while ! openwebif_remote elhost powerstate | grep -q instandby.*false ; do debug -n . ; sleep 1 ; done
+		while ! openwebif elhost powerstate | grep -q instandby.*false ; do debug -n . ; sleep 1 ; done
 		debug "Ready."
 		vfd EINI
 		debug -n "Initializing Elevation motor: "
-		openwebif_remote elhost $ELINIT | grep -v issued
+		openwebif elhost $ELINIT | grep -v issued
 		debug "Done."
 	fi
 }
@@ -180,7 +180,7 @@ interpret() {
 				vfd $AZINTVFD
 				debug "AZMOTOR: $AZROT/$AZMAX (AZCENTER:$AZCENTER)"
 				AZROT=$(printf '%03d\n' "$AZROT")
-				openwebif_remote azhost left left left ${AZROT:0:1} ${AZROT:1:1} ${AZROT:2:1} yellow | grep -v issued >&2
+				openwebif azhost left left left ${AZROT:0:1} ${AZROT:1:1} ${AZROT:2:1} yellow | grep -v issued >&2
 				AZOLD=$AZROT
 			fi
 			if [ -n "$ELHOST" ] ; then
@@ -195,7 +195,7 @@ interpret() {
 					vfd $ELINTVFD
 					debug "ELMOTOR: $ELROT/$ELMAX (ELCENTER:$ELCENTER)"
 					ELROT=$(printf '%03d\n' "$ELROT")
-					openwebif_remote elhost left left left ${ELROT:0:1} ${ELROT:1:1} ${ELROT:2:1} yellow | grep -v issued >&2
+					openwebif elhost left left left ${ELROT:0:1} ${ELROT:1:1} ${ELROT:2:1} yellow | grep -v issued >&2
 					ELOLD=$ELROT
 				fi
 			fi
@@ -341,7 +341,7 @@ Current AZCENTER:<br>
 <div id="compass">
 EOF
 			for i in 90 113 135 158 180 203 225 248 270 293 315 338 0 23 45 68 ; do
-				echo "<div class=\"point\"><a href=\"/conf/AZCENTER/$i\"><div>$i&deg;</div></a></div>"
+				echo "<div class=\"point\"><a href=\"/service/conf/AZCENTER/$i\"><div>$i&deg;</div></a></div>"
 			done
 			cat <<'EOF'
   <div class="inner-compass">
@@ -447,12 +447,12 @@ else
 			interpret
 			;;
 		reboot)
-			[ -n "$ELHOST" ] && openwebif_remote elhost reboot
-			openwebif_remote azhost reboot >/dev/null 2>&1
+			[ -n "$ELHOST" ] && openwebif elhost reboot
+			openwebif azhost reboot >/dev/null 2>&1
 			;;
 		shutdown)
-			[ -n "$ELHOST" ] && openwebif_remote elhost shutdown
-			openwebif_remote azhost shutdown >/dev/null 2>&1
+			[ -n "$ELHOST" ] && openwebif elhost shutdown
+			openwebif azhost shutdown >/dev/null 2>&1
 			;;
 		conf)
 			update_conf "$CONFRUNFILE" "$2" "$3"
@@ -461,7 +461,7 @@ else
 			;;
 		remote)
 			shift
-			openwebif_remote $*
+			openwebif $*
 			;;
 		*)
 			echo "Usage: $SCRIPTNAME <command> [<parameter1> ...]"
@@ -475,8 +475,9 @@ else
 			echo "  install: install service for autostart"
 			echo "  uninstall: uninstall service for autostart"
 			echo "  nnn: override Azimuth center and run once in foreground"
-			echo "  remote: simulate OpenWebif remote keypress, example:"
-			echo "          $SCRIPTNAME remote azhost exit red elhost exit blue up up 0 0 0 0 yellow"
+			echo "  openwebif: access to OpenWebif API (remote keypress and power), examples:"
+			echo "          $SCRIPTNAME openwebif azhost red exit up 0 ok menu"
+			echo "          $SCRIPTNAME openwebif elhost shutdown"
 			;;
 	esac
 fi
