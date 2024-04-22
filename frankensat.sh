@@ -2,7 +2,7 @@
 #
 # FrankenSaT - "Frankenstein" Satellite Tracker
 # https://github.com/BranoSundancer/FrankenSaT
-# Version: 1.8
+# Version: 1.9
 #
 # Author: Branislav Vartik
 #
@@ -27,6 +27,8 @@ PIDFILE="/var/run/$BASENAME.pid"
 VFDFILE="/var/run/$BASENAME.vfd"
 HTTPLOGFILE="$BASENAME.log"
 [ -z $PARENT ] && PARENT="$(ps -o comm= $PPID)"
+OPENWEBIFAPI=/api/
+declare -A OPENWEBIFREMOTEKEYS=([1]=2 [2]=3 [3]=4 [4]=5 [5]=6 [6]=7 [7]=8 [8]=9 [9]=10 [0]=11 [menu]=139 [ok]=352 [exit]=174 [up]=103 [down]=108 [left]=105 [right]=106 [red]=398 [green]=399 [yellow]=400 [blue]=401)
 
 killtree() {
 	for child in $(pgrep -P $1) ; do
@@ -54,7 +56,49 @@ vfd() {
 }
 
 update_conf() {
+	# FIXME: Add if not exists
 	sed -ri "s/^($2=)(.+)$/\1$3/" "$1"
+}
+
+openwebif_remote() {
+	local REMOTEHOST="$AZHOST"
+	local REMOTEPORT="$AZPORT"
+	local COMMAND=
+	if [ "$1" = "elhost" ] ; then
+		REMOTEHOST="$ELHOST"
+		REMOTEPORT="$ELPORT"
+	fi
+	shift
+	for cmd in $* ; do
+		echo -n "openwebif_remote: $cmd "
+		COMMAND=
+		if [ ${OPENWEBIFREMOTEKEYS[$cmd]} ] ; then
+			COMMAND="remotecontrol?command=${OPENWEBIFREMOTEKEYS[$cmd]}"
+		else
+			case $cmd in
+				reboot)
+					COMMAND="powerstate?newstate=2"
+					;;
+				restart)
+					COMMAND="powerstate?newstate=3"
+					;;
+				shutdown)
+					COMMAND="powerstate?newstate=1"
+					;;
+				powerstate)
+					COMMAND="powerstate"
+					;;
+				*)
+					echo "UNKNOWN"
+					;;
+			esac
+		fi
+		if [ -n "$COMMAND" ] ; then
+			echo -e "GET $OPENWEBIFAPI$COMMAND HTTP/1.0\r\n\r" | nc -w 2 $REMOTEHOST $REMOTEPORT 2>/dev/null | grep -m 1 -A 99 '^[[:space:]]*$' | sed -r "s/(^.*\{|\}.*$)//g" | sed -r "s/, /\n/g" | grep -vE '"result": true|^[[:space:]]*$'
+			# workaround for slower API after OK
+			[ "$cmd" = "ok" ] && sleep 0.5
+		fi
+	done
 }
 
 init_conf() {
@@ -62,6 +106,8 @@ init_conf() {
 	[ ! -e "$CONFFILE" ] && [ -e "$CONFFILE.dist" ] && debug $(cp -vf "$CONFFILE.dist" "$CONFFILE")
 	[ "$1" = "override" ] || [ ! -e "$CONFRUNFILE" ] && cp -f "$CONFFILE" "$CONFRUNFILE"
 	. "$CONFRUNFILE"
+	AZPORT="${AZPORT:-80}"
+	ELPORT="${ELPORT:-80}"
 }
 
 init_vfd() {
@@ -72,20 +118,20 @@ init_vfd() {
 
 init_motors() {
 	debug -n "Waiting for Azimuth motor OpenWebif availability: "
-	while ! ./openwebif_remote.sh $AZHOST powerstate | grep -q instandby.*false ; do debug -n . ; sleep 1 ; done
+	while ! openwebif_remote azhost powerstate | grep -q instandby.*false ; do debug -n . ; sleep 1 ; done
 	debug "Ready."
 	vfd INIT
 	debug -n "Initializing Azimuth motor: "
-	./openwebif_remote.sh $AZHOST $AZINIT | grep -v issued
+	openwebif_remote azhost $AZINIT | grep -v issued
 	debug "Done."
 	if [ -n "$ELHOST" ] ; then
 		vfd EFST
 		debug -n "Waiting for Elevation motor OpenWebif availability: "
-		while ! ./openwebif_remote.sh $ELHOST powerstate | grep -q instandby.*false ; do debug -n . ; sleep 1 ; done
+		while ! openwebif_remote elhost powerstate | grep -q instandby.*false ; do debug -n . ; sleep 1 ; done
 		debug "Ready."
 		vfd EINI
 		debug -n "Initializing Elevation motor: "
-		./openwebif_remote.sh $ELHOST $ELINIT | grep -v issued
+		openwebif_remote elhost $ELINIT | grep -v issued
 		debug "Done."
 	fi
 }
@@ -101,7 +147,6 @@ listen() {
 interpret() {
 	# rotctl interpreter
 	trap init_conf USR1
-	init_conf
 	AZ=0.000000
 	EL=0.000000
 	AZOLD=-1
@@ -135,7 +180,7 @@ interpret() {
 				vfd $AZINTVFD
 				debug "AZMOTOR: $AZROT/$AZMAX (AZCENTER:$AZCENTER)"
 				AZROT=$(printf '%03d\n' "$AZROT")
-				./openwebif_remote.sh $AZHOST left left left ${AZROT:0:1} ${AZROT:1:1} ${AZROT:2:1} yellow | grep -v issued >&2
+				openwebif_remote azhost left left left ${AZROT:0:1} ${AZROT:1:1} ${AZROT:2:1} yellow | grep -v issued >&2
 				AZOLD=$AZROT
 			fi
 			if [ -n "$ELHOST" ] ; then
@@ -150,7 +195,7 @@ interpret() {
 					vfd $ELINTVFD
 					debug "ELMOTOR: $ELROT/$ELMAX (ELCENTER:$ELCENTER)"
 					ELROT=$(printf '%03d\n' "$ELROT")
-					./openwebif_remote.sh $ELHOST left left left ${ELROT:0:1} ${ELROT:1:1} ${ELROT:2:1} yellow | grep -v issued >&2
+					openwebif_remote elhost left left left ${ELROT:0:1} ${ELROT:1:1} ${ELROT:2:1} yellow | grep -v issued >&2
 					ELOLD=$ELROT
 				fi
 			fi
@@ -194,6 +239,7 @@ stop() {
 }
 
 http_response() {
+	HTTP_CODE="$1"
 	echo "HTTP/1.0 $HTTP_CODE ${HTTP_RESPONSE[$HTTP_CODE]}"
 	if [ $HTTP_CODE = 302 ] ; then
 		echo "Location: /"
@@ -201,7 +247,7 @@ http_response() {
 	echo "Connection: close"
 	if [[ $HTTP_CODE != 2* ]] ; then
 		echo
-	       	echo "${HTTP_RESPONSE[$HTTP_CODE]}"
+		echo "${HTTP_RESPONSE[$HTTP_CODE]}"
 	fi
 }
 
@@ -209,8 +255,10 @@ shopt -s extglob
 if [ "$PARENT" = "inetd" ] || [ "$1" = "inetd" ] ; then
 	# inetd is our HTTP listener, install with:
 	# echo "8080 stream tcp nowait root /home/root/frankensat.sh" >> /etc/inetd.conf ; /etc/init.d/inetd.busybox restart
+	# for port 80 you need to reconfigure OpenWebif port and static IP or DHCP reservation (OpenWebif still listens on localhost, so you need to be specific with the listening IP), then install with this:
+	# init 4 ; echo "$(ip -f inet -o addr show | sed -n '2p' | cut -d\  -f 7 | cut -d/ -f 1 | sed -r "s/(.+)/\1:/")80 stream tcp nowait root /home/root/frankensat.sh" >> /etc/inetd.conf ; /etc/init.d/inetd.busybox restart ; echo "config.OpenWebif.port=81" >> /etc/enigma2/settings ; init 3
 	init_conf
-	declare -a HTTP_RESPONSE=([200]="OK" [302]="Found" [404]="Not Found")
+	declare -a HTTP_RESPONSE=([200]="OK",[302]="Found",[404]="Not Found")
 	line=foo
 	while [ "$line" != "" ] ; do
 		read -r line
@@ -220,31 +268,13 @@ if [ "$PARENT" = "inetd" ] || [ "$1" = "inetd" ] ; then
 	REQUEST_URI=$(echo "$REQUEST" | cut -d " " -f 2)
 	REMOTE_ADDR=$(netstat -tenp 2>/dev/null | sed -nr "s/^[^ ]+ +[^ ]+ +[^ ]+ +[^ ]+ +([0-9\.]+):.+ $$\/.+$/\1/p")
 	URI=(${REQUEST_URI//\// })
-	HTTP_CODE=302
 	case ${URI[0]} in
-		restart)
-			./frankensat.sh restart >/dev/null 2>&1
-			http_response
-			;;
-		reboot)
-			[ -n "$ELHOST" ] && ./openwebif_remote.sh $ELHOST reboot >/dev/null 2>&1
-			./openwebif_remote.sh localhost reboot >/dev/null 2>&1
-			http_response
-			;;
-		shutdown)
-			[ -n "$ELHOST" ] && ./openwebif_remote.sh $ELHOST shutdown >/dev/null 2>&1
-			./openwebif_remote.sh localhost shutdown >/dev/null 2>&1
-			http_response
-			;;
-		conf)
-			update_conf "$CONFRUNFILE" "${URI[1]}" "${URI[2]}"
-			INTERPRET=$(grep -l '/bin/bash$' /dev/null $(grep -l '^interpret$' /proc/*/cmdline 2>/dev/null) 2>/dev/null | cut -d/ -f 3 | head -n 1)
-			[ -n "$INTERPRET" ] && kill -USR1 $INTERPRET
-			http_response
+		service)
+			./frankensat.sh ${URI[1]} "${URI[2]}" "${URI[3]}" >/dev/null 2>&1
+			http_response 302
 			;;
 		"")
-			HTTP_CODE=200
-			http_response
+			http_response 200
 			cat <<'EOF'
 Content-Type: text/html; charset=utf-8
 
@@ -332,7 +362,7 @@ EOF
   <!-- <div class="center-point" style="font-size: 120px;">&#129517;</div> -->
 </div>
 <br>
-[<a href="/restart">Restart service</a>] [<a href="/reboot">Reboot device(s)</a>] [<a href="/shutdown">Shutdown device(s)</a>]
+[<a href="/service/restart">Restart service</a>] [<a href="/service/reboot">Reboot device(s)</a>] [<a href="/service/shutdown">Shutdown device(s)</a>]
 </center>
 <script type="text/javascript">
 <!--
@@ -361,13 +391,13 @@ calcCircle(document.querySelectorAll('#compass > .inner-compass > .point'));
 EOF
 			;;
 		*)
-			HTTP_CODE=404
-			http_response
+			http_response 404
 			;;
 	esac
 	echo "$REMOTE_ADDR - - [$(date +'%d/%b/%Y:%H:%M:%S %z')] \"$REQUEST\" $HTTP_CODE 0" >>$HTTPLOGFILE
 else
 	# interactive or daemon
+	init_conf
 	case "$1" in
 		start)
 			start
@@ -399,8 +429,8 @@ else
 				echo $$ >$PIDFILE
 				init_conf override
 				init_vfd
-				# First parameter overrides Azimuth center from configuration file - usable for portable operation
-				[ -n "$1" ] && update_conf "$CONFRUNFILE" AZCENTER "$1"
+				# Override Azimuth center in running config - usable for portable operation
+				update_conf "$CONFRUNFILE" AZCENTER "$1"
 				init_motors
 				listen >/dev/null
 				killtree $$ parent 2>/dev/null
@@ -416,13 +446,37 @@ else
 		interpret)
 			interpret
 			;;
+		reboot)
+			[ -n "$ELHOST" ] && openwebif_remote elhost reboot
+			openwebif_remote azhost reboot >/dev/null 2>&1
+			;;
+		shutdown)
+			[ -n "$ELHOST" ] && openwebif_remote elhost shutdown
+			openwebif_remote azhost shutdown >/dev/null 2>&1
+			;;
+		conf)
+			update_conf "$CONFRUNFILE" "$2" "$3"
+			INTERPRET=$(grep -l '/bin/bash$' /dev/null $(grep -l '^interpret$' /proc/*/cmdline 2>/dev/null) 2>/dev/null | cut -d/ -f 3 | head -n 1)
+			[ -n "$INTERPRET" ] && kill -USR1 $INTERPRET
+			;;
+		remote)
+			shift
+			openwebif_remote $*
+			;;
 		*)
-			echo "Usage: $SCRIPTNAME {start|stop|install|uninstall|<nnn>}"
-			echo "       start: start service in background"
-			echo "       stop: stop service in background"
-			echo "       install: install service for autostart"
-			echo "       uninstall: uninstall service for autostart"
-			echo "       nnn: override Azimuth center and run once in foreground"
+			echo "Usage: $SCRIPTNAME <command> [<parameter1> ...]"
+			echo
+			echo "Commands:"
+			echo "  start: start service in background"
+			echo "  stop: stop service in background"
+			echo "  restart: restart service in background"
+			echo "  reboot: reboot device(s)"
+			echo "  shutdown: shutdown device(s)"
+			echo "  install: install service for autostart"
+			echo "  uninstall: uninstall service for autostart"
+			echo "  nnn: override Azimuth center and run once in foreground"
+			echo "  remote: simulate OpenWebif remote keypress, example:"
+			echo "          $SCRIPTNAME remote azhost exit red elhost exit blue up up 0 0 0 0 yellow"
 			;;
 	esac
 fi
