@@ -2,7 +2,7 @@
 #
 # FrankenSaT - "Frankenstein" Satellite Tracker
 # https://github.com/BranoSundancer/FrankenSaT
-# Version: 1.9
+# Version: 2.0
 #
 # Author: Branislav Vartik
 #
@@ -55,9 +55,48 @@ vfd() {
 	[ -n "$VFDDEV" ] && echo "$1" >"$VFDDEV" && echo "$1" >"$VFDFILE"
 }
 
-update_conf() {
-	# FIXME: Add if not exists
-	sed -ri "s/^($2=)(.+)$/\1$3/" "$1"
+update_confrun() {
+	if grep -q "^$1=" "$CONFRUNFILE" ; then
+		sed -ri "s/^($1=)(.+)$/\1$2/" "$CONFRUNFILE"
+	else
+		echo "$1=$2" >> "$CONFRUNFILE"
+	fi
+}
+
+set_pos() {
+	AZ=$(printf "%.6f" $(echo "$1" | tr , .))
+	AZINT=${AZ%.*}
+	AZROT=$((AZINT+AZMAX/2-AZCENTER))
+	[ $AZROT -ge 360 ] && AZROT=$((AZROT-360))
+	[ $AZROT -lt 0 ] && AZROT=$((360+AZROT))
+	[ $AZROT -gt 180 ] && AZROT=0
+	[ $AZROT -gt $AZMAX ] && AZROT=$AZMAX
+	if [ "$AZROT" -ne "$AZOLD" ] ; then
+		AZINTVFD=A$(printf '%03d\n' "$AZINT")
+		vfd $AZINTVFD
+		debug "AZMOTOR: $AZROT/$AZMAX (AZCENTER:$AZCENTER)"
+		AZROT=$(printf '%03d\n' "$AZROT")
+		openwebif azhost left left left ${AZROT:0:1} ${AZROT:1:1} ${AZROT:2:1} yellow | grep -v issued >&2
+		AZOLD=$AZROT
+		update_confrun AZOLD "$AZOLD"
+	fi
+	if [ -n "$ELHOST" ] ; then
+		EL=$(printf "%.6f" $(echo "$2" | tr , .))
+		ELINT=${EL%.*}
+		ELROT=$((ELINT+ELMAX/2-ELCENTER))
+		[ $ELROT -lt 0 ] && ELROT=0
+		[ $ELROT -gt 90 ] && ELROT=90
+		[ $ELROT -gt $ELMAX ] && ELROT=$ELMAX
+		if [ "$ELROT" -ne "$ELOLD" ] ; then
+			ELINTVFD=E$(printf '%03d\n' "$ELINT")
+			vfd $ELINTVFD
+			debug "ELMOTOR: $ELROT/$ELMAX (ELCENTER:$ELCENTER)"
+			ELROT=$(printf '%03d\n' "$ELROT")
+			openwebif elhost left left left ${ELROT:0:1} ${ELROT:1:1} ${ELROT:2:1} yellow | grep -v issued >&2
+			ELOLD=$ELROT
+			update_confrun ELOLD "$ELOLD"
+		fi
+	fi
 }
 
 openwebif() {
@@ -104,7 +143,11 @@ openwebif() {
 init_conf() {
 	[ "$PARENT" = "init" ] || [ "$PARENT" = "inetd" ] && HEADLESS=1
 	[ ! -e "$CONFFILE" ] && [ -e "$CONFFILE.dist" ] && debug $(cp -vf "$CONFFILE.dist" "$CONFFILE")
-	[ "$1" = "override" ] || [ ! -e "$CONFRUNFILE" ] && cp -f "$CONFFILE" "$CONFRUNFILE"
+	if [ "$1" = "override" ] || [ ! -e "$CONFRUNFILE" ] ; then
+		cp -f "$CONFFILE" "$CONFRUNFILE"
+		update_confrun AZOLD -1
+		update_confrun ELOLD -1
+	fi
 	. "$CONFRUNFILE"
 	AZPORT="${AZPORT:-80}"
 	ELPORT="${ELPORT:-80}"
@@ -149,9 +192,6 @@ interpret() {
 	trap init_conf USR1
 	AZ=0.000000
 	EL=0.000000
-	AZOLD=-1
-	ELOLD=-1
-
 	vfd CONN
 	debug "Connected."
 	while read line ; do
@@ -159,54 +199,24 @@ interpret() {
 		debug "RECV: $line"
 		cmd=$(echo "$line" | cut -d " " -f 1)
 		case $cmd in
-		p)
+		p|get_pos)
 			# send "$AZ\n$EL"
 			# FIXME: Probably must be both lines send in single packet, otherwise gpredict decodes it as ERROR
 			# workaround " " according to https://adventurist.me/posts/0136
 			send " "
 			[ -n "$ELHOST" ] && grep -q "^$AZINTVFD\$" $VFDFILE && vfd $ELINTVFD || vfd $AZINTVFD
 			;;
-		P)
+		P|set_pos)
 			send "RPRT 0"
-			AZ=$(printf "%.6f" $(echo "$line" | cut -d " " -f 2 | tr , .))
-			AZINT=${AZ%.*}
-			AZROT=$((AZINT+AZMAX/2-AZCENTER))
-			[ $AZROT -ge 360 ] && AZROT=$((AZROT-360))
-			[ $AZROT -lt 0 ] && AZROT=$((360+AZROT))
-			[ $AZROT -gt 180 ] && AZROT=0
-			[ $AZROT -gt $AZMAX ] && AZROT=$AZMAX
-			if [ "$AZROT" -ne "$AZOLD" ] ; then
-				AZINTVFD=A$(printf '%03d\n' "$AZINT")
-				vfd $AZINTVFD
-				debug "AZMOTOR: $AZROT/$AZMAX (AZCENTER:$AZCENTER)"
-				AZROT=$(printf '%03d\n' "$AZROT")
-				openwebif azhost left left left ${AZROT:0:1} ${AZROT:1:1} ${AZROT:2:1} yellow | grep -v issued >&2
-				AZOLD=$AZROT
-			fi
-			if [ -n "$ELHOST" ] ; then
-				EL=$(printf "%.6f" $(echo "$line" | cut -d " " -f 3 | tr , .))
-				ELINT=${EL%.*}
-				ELROT=$((ELINT+ELMAX/2-ELCENTER))
-				[ $ELROT -lt 0 ] && ELROT=0
-				[ $ELROT -gt 90 ] && ELROT=90
-				[ $ELROT -gt $ELMAX ] && ELROT=$ELMAX
-				if [ "$ELROT" -ne "$ELOLD" ] ; then
-					ELINTVFD=E$(printf '%03d\n' "$ELINT")
-					vfd $ELINTVFD
-					debug "ELMOTOR: $ELROT/$ELMAX (ELCENTER:$ELCENTER)"
-					ELROT=$(printf '%03d\n' "$ELROT")
-					openwebif elhost left left left ${ELROT:0:1} ${ELROT:1:1} ${ELROT:2:1} yellow | grep -v issued >&2
-					ELOLD=$ELROT
-				fi
-			fi
+			set_pos $(echo "$line" | cut -d " " -f 2) $(echo "$line" | cut -d " " -f 3)
 			;;
-		S)
+		S|stop)
 			# Dummy functonality, in fact we can't stop motors
 			send "RPRT 0"
 			vfd STOP
 			;;
 		q)
-			send "RPRT 0"
+#			send "RPRT 0"
 			vfd QUIT
 			sleep 0.5
 			exit
@@ -258,7 +268,7 @@ if [ "$PARENT" = "inetd" ] || [ "$1" = "inetd" ] ; then
 	# for port 80 you need to reconfigure OpenWebif port and static IP or DHCP reservation (OpenWebif still listens on localhost, so you need to be specific with the listening IP), then install with this:
 	# init 4 ; echo "$(ip -f inet -o addr show | sed -n '2p' | cut -d\  -f 7 | cut -d/ -f 1 | sed -r "s/(.+)/\1:/")80 stream tcp nowait root /home/root/frankensat.sh" >> /etc/inetd.conf ; /etc/init.d/inetd.busybox restart ; echo "config.OpenWebif.port=81" >> /etc/enigma2/settings ; init 3
 	init_conf
-	declare -a HTTP_RESPONSE=([200]="OK",[302]="Found",[404]="Not Found")
+	declare -a HTTP_RESPONSE=([200]="OK" [302]="Found" [404]="Not Found")
 	line=foo
 	while [ "$line" != "" ] ; do
 		read -r line
@@ -272,6 +282,20 @@ if [ "$PARENT" = "inetd" ] || [ "$1" = "inetd" ] ; then
 		service)
 			./frankensat.sh ${URI[1]} "${URI[2]}" "${URI[3]}" >/dev/null 2>&1
 			http_response 302
+			;;
+		arduino)
+			# API for VosWorx Satellite Tracker (SatTrack)
+			# Video: https://youtu.be/uEpd_ZVcOg4
+			# Web: https://www.vosworx.com/2019/04/27/satellite-tracker-sattrack/
+			# App Store: https://apps.apple.com/us/app/satellite-tracker/id1438679383
+			if [ "${URI[1]}" = "rotor" ] && [ "${URI[2]}" = "azelplr" ] ; then
+				http_response 200
+				echo "Content-Type: text/plain; charset=utf-8"
+				echo
+				set_pos "${URI[3]}" "${URI[4]}"
+			else
+				http_response 404
+			fi
 			;;
 		"")
 			http_response 200
@@ -430,7 +454,7 @@ else
 				init_conf override
 				init_vfd
 				# Override Azimuth center in running config - usable for portable operation
-				update_conf "$CONFRUNFILE" AZCENTER "$1"
+				update_confrun AZCENTER "$1"
 				init_motors
 				listen >/dev/null
 				killtree $$ parent 2>/dev/null
@@ -455,7 +479,7 @@ else
 			openwebif azhost shutdown >/dev/null 2>&1
 			;;
 		conf)
-			update_conf "$CONFRUNFILE" "$2" "$3"
+			update_confrun "$2" "$3"
 			INTERPRET=$(grep -l '/bin/bash$' /dev/null $(grep -l '^interpret$' /proc/*/cmdline 2>/dev/null) 2>/dev/null | cut -d/ -f 3 | head -n 1)
 			[ -n "$INTERPRET" ] && kill -USR1 $INTERPRET
 			;;
