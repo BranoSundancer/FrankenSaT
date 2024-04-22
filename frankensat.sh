@@ -71,14 +71,14 @@ set_pos() {
 	[ $AZROT -lt 0 ] && AZROT=$((360+AZROT))
 	[ $AZROT -gt 180 ] && AZROT=0
 	[ $AZROT -gt $AZMAX ] && AZROT=$AZMAX
-	if [ "$AZROT" -ne "$AZOLD" ] ; then
+	if [ "$AZROT" -ne "$AZROTOLD" ] ; then
 		AZINTVFD=A$(printf '%03d\n' "$AZINT")
 		vfd $AZINTVFD
 		debug "AZMOTOR: $AZROT/$AZMAX (AZCENTER:$AZCENTER)"
 		AZROT=$(printf '%03d\n' "$AZROT")
 		openwebif azhost left left left ${AZROT:0:1} ${AZROT:1:1} ${AZROT:2:1} yellow | grep -v issued >&2
-		AZOLD=$AZROT
-		update_confrun AZOLD "$AZOLD"
+		AZROTOLD=$AZROT
+		update_confrun AZROTOLD "$AZROTOLD"
 	fi
 	if [ -n "$ELHOST" ] ; then
 		EL=$(printf "%.6f" $(echo "$2" | tr , .))
@@ -87,14 +87,14 @@ set_pos() {
 		[ $ELROT -lt 0 ] && ELROT=0
 		[ $ELROT -gt 90 ] && ELROT=90
 		[ $ELROT -gt $ELMAX ] && ELROT=$ELMAX
-		if [ "$ELROT" -ne "$ELOLD" ] ; then
+		if [ "$ELROT" -ne "$ELROTOLD" ] ; then
 			ELINTVFD=E$(printf '%03d\n' "$ELINT")
 			vfd $ELINTVFD
 			debug "ELMOTOR: $ELROT/$ELMAX (ELCENTER:$ELCENTER)"
 			ELROT=$(printf '%03d\n' "$ELROT")
 			openwebif elhost left left left ${ELROT:0:1} ${ELROT:1:1} ${ELROT:2:1} yellow | grep -v issued >&2
-			ELOLD=$ELROT
-			update_confrun ELOLD "$ELOLD"
+			ELROTOLD=$ELROT
+			update_confrun ELROTOLD "$ELROTOLD"
 		fi
 	fi
 }
@@ -145,8 +145,8 @@ init_conf() {
 	[ ! -e "$CONFFILE" ] && [ -e "$CONFFILE.dist" ] && debug $(cp -vf "$CONFFILE.dist" "$CONFFILE")
 	if [ "$1" = "override" ] || [ ! -e "$CONFRUNFILE" ] ; then
 		cp -f "$CONFFILE" "$CONFRUNFILE"
-		update_confrun AZOLD -1
-		update_confrun ELOLD -1
+		update_confrun AZROTOLD -1
+		update_confrun ELROTOLD -1
 	fi
 	. "$CONFRUNFILE"
 	AZPORT="${AZPORT:-80}"
