@@ -6,8 +6,10 @@ AZPORT=
 AZINIT="exit exit exit exit exit exit blue up up up right down down down down ok exit down down ok up up 0 0 0 0"
 # Center Azimuth of your installation
 AZCENTER=270
-# Max. reachable degree of Azimuth begining with 0; you need also adjust installation Longitude in receiver's settings to AZMAX/2 East. As result, you will be able to point the motor in virtual range 0..AZMAX degrees East
+# Max. reachable degree of Azimuth begining with AZMIN; you need also adjust installation Longitude in receiver's settings to AZMAX/2 East. As result, you will be able to point the motor in virtual range AZMIN..AZMAX degrees East
 AZMAX=148
+#  Min. reachable degree of Azimuth, default is 0
+AZMIN=1
 # Host/IP of Elevation motor's receiver OpenWebif API, leave empty if you have only one motor
 ELHOST=
 # Port of Elevation motor's receiver OpenWebif API, default is 80
@@ -18,5 +20,7 @@ ELINIT="exit exit exit exit exit exit menu up up ok down down down down down ok 
 ELCENTER=45
 # The same as for Azimuth motor, but for Elevation
 ELMAX=90
+# The same as for Azimuth motor, but for Elevation
+ELMIN=
 # 7-segment display device path (/dev/dbox/oled0, /proc/vfd, /dev/vfd), leave blank if none
 VFDDEV=/dev/dbox/oled0
