@@ -2,7 +2,7 @@
 #
 # FrankenSaT - "Frankenstein" Satellite Tracker
 # https://github.com/BranoSundancer/FrankenSaT
-# Version: 2.0
+# Version: 2.1
 #
 # Author: Branislav Vartik
 #
@@ -66,10 +66,11 @@ update_confrun() {
 set_pos() {
 	AZ=$(printf "%.6f" $(echo "$1" | tr , .))
 	AZINT=${AZ%.*}
-	AZROT=$((AZINT+AZMAX/2-AZCENTER))
+	AZROT=$((AZINT+(AZMAX-AZMIN)/2-AZCENTER))
 	[ $AZROT -ge 360 ] && AZROT=$((AZROT-360))
 	[ $AZROT -lt 0 ] && AZROT=$((360+AZROT))
 	[ $AZROT -gt 180 ] && AZROT=0
+	[ $AZROT -lt $AZMIN ] && AZROT=$AZMIN
 	[ $AZROT -gt $AZMAX ] && AZROT=$AZMAX
 	if [ "$AZROT" -ne "$AZROTOLD" ] ; then
 		AZINTVFD=A$(printf '%03d\n' "$AZINT")
@@ -84,7 +85,7 @@ set_pos() {
 		EL=$(printf "%.6f" $(echo "$2" | tr , .))
 		ELINT=${EL%.*}
 		ELROT=$((ELINT+ELMAX/2-ELCENTER))
-		[ $ELROT -lt 0 ] && ELROT=0
+		[ $ELROT -lt $ELMIN ] && ELROT=$ELMIN
 		[ $ELROT -gt 90 ] && ELROT=90
 		[ $ELROT -gt $ELMAX ] && ELROT=$ELMAX
 		if [ "$ELROT" -ne "$ELROTOLD" ] ; then
@@ -140,7 +141,7 @@ openwebif() {
 	done
 }
 
-init_conf() {
+init_confrun() {
 	[ "$PARENT" = "init" ] || [ "$PARENT" = "inetd" ] && HEADLESS=1
 	[ ! -e "$CONFFILE" ] && [ -e "$CONFFILE.dist" ] && debug $(cp -vf "$CONFFILE.dist" "$CONFFILE")
 	if [ "$1" = "override" ] || [ ! -e "$CONFRUNFILE" ] ; then
@@ -149,6 +150,8 @@ init_conf() {
 		update_confrun ELROTOLD -1
 	fi
 	. "$CONFRUNFILE"
+	AZMIN=${AZMIN:-0}
+	ELMIN=${ELMIN:-0}
 	AZPORT="${AZPORT:-80}"
 	ELPORT="${ELPORT:-80}"
 }
@@ -189,7 +192,7 @@ listen() {
 
 interpret() {
 	# rotctl interpreter
-	trap init_conf USR1
+	trap init_confrun USR1
 	AZ=0.000000
 	EL=0.000000
 	vfd CONN
@@ -267,7 +270,7 @@ if [ "$PARENT" = "inetd" ] || [ "$1" = "inetd" ] ; then
 	# echo "8080 stream tcp nowait root /home/root/frankensat.sh" >> /etc/inetd.conf ; /etc/init.d/inetd.busybox restart
 	# for port 80 you need to reconfigure OpenWebif port and static IP or DHCP reservation (OpenWebif still listens on localhost, so you need to be specific with the listening IP), then install with this:
 	# init 4 ; echo "$(ip -f inet -o addr show | sed -n '2p' | cut -d\  -f 7 | cut -d/ -f 1 | sed -r "s/(.+)/\1:/")80 stream tcp nowait root /home/root/frankensat.sh" >> /etc/inetd.conf ; /etc/init.d/inetd.busybox restart ; echo "config.OpenWebif.port=81" >> /etc/enigma2/settings ; init 3
-	init_conf
+	init_confrun
 	declare -a HTTP_RESPONSE=([200]="OK" [302]="Found" [404]="Not Found")
 	line=foo
 	while [ "$line" != "" ] ; do
@@ -421,7 +424,7 @@ EOF
 	echo "$REMOTE_ADDR - - [$(date +'%d/%b/%Y:%H:%M:%S %z')] \"$REQUEST\" $HTTP_CODE 0" >>$HTTPLOGFILE
 else
 	# interactive or daemon
-	init_conf
+	init_confrun
 	case "$1" in
 		start)
 			start
@@ -451,7 +454,7 @@ else
 				echo "Already running."
 			else
 				echo $$ >$PIDFILE
-				init_conf override
+				init_confrun override
 				init_vfd
 				# Override Azimuth center in running config - usable for portable operation
 				update_confrun AZCENTER "$1"
@@ -461,7 +464,7 @@ else
 			fi
 			;;
 		daemon)
-			init_conf override
+			init_confrun override
 			init_vfd
 			init_motors
 			while [ "$(listen)" = "0" ] ; do sleep 0.5 ; done
@@ -483,7 +486,7 @@ else
 			INTERPRET=$(grep -l '/bin/bash$' /dev/null $(grep -l '^interpret$' /proc/*/cmdline 2>/dev/null) 2>/dev/null | cut -d/ -f 3 | head -n 1)
 			[ -n "$INTERPRET" ] && kill -USR1 $INTERPRET
 			;;
-		remote)
+		openwebif)
 			shift
 			openwebif $*
 			;;
