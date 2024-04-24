@@ -64,18 +64,19 @@ update_confrun() {
 }
 
 set_pos() {
+	local FLIP=0
 	AZ=$(printf "%.6f" $(echo "$1" | tr , .))
 	AZINT=${AZ%.*}
-	AZROT=$((AZINT+(AZMAX-AZMIN)/2-AZCENTER))
+	AZROT=$((AZINT-AZCENTER+AZMIN+(AZMAX-AZMIN)/2))
 	[ $AZROT -ge 360 ] && AZROT=$((AZROT-360))
 	[ $AZROT -lt 0 ] && AZROT=$((360+AZROT))
-	[ $AZROT -gt 180 ] && AZROT=0
-	[ $AZROT -lt $AZMIN ] && AZROT=$AZMIN
+	[ $AZROT -gt 180 ] && FLIP=1 && AZROT=$((AZROT-180)) # AZROT=$((180-(AZROT-180))) ak motor nevie presiahnut 90st
 	[ $AZROT -gt $AZMAX ] && AZROT=$AZMAX
+	[ $AZROT -lt $AZMIN ] && AZROT=$AZMIN
 	if [ "$AZROT" -ne "$AZROTOLD" ] ; then
 		AZINTVFD=A$(printf '%03d\n' "$AZINT")
 		vfd $AZINTVFD
-		debug "AZMOTOR: $AZROT/$AZMAX (AZCENTER:$AZCENTER)"
+		debug "AZROT: $AZROT/($AZMIN-$AZMAX), AZCENTER:$AZCENTER"
 		AZROT=$(printf '%03d\n' "$AZROT")
 		openwebif azhost left left left ${AZROT:0:1} ${AZROT:1:1} ${AZROT:2:1} yellow | grep -v issued >&2
 		AZROTOLD=$AZROT
@@ -84,14 +85,14 @@ set_pos() {
 	if [ -n "$ELHOST" ] ; then
 		EL=$(printf "%.6f" $(echo "$2" | tr , .))
 		ELINT=${EL%.*}
-		ELROT=$((ELINT+ELMAX/2-ELCENTER))
-		[ $ELROT -lt $ELMIN ] && ELROT=$ELMIN
-		[ $ELROT -gt 90 ] && ELROT=90
+		ELROT=$ELINT
+		[ $FLIP -eq 1 ] && ELROT=$((180-ELROT))
 		[ $ELROT -gt $ELMAX ] && ELROT=$ELMAX
+		[ $ELROT -lt $ELMIN ] && ELROT=$ELMIN
 		if [ "$ELROT" -ne "$ELROTOLD" ] ; then
 			ELINTVFD=E$(printf '%03d\n' "$ELINT")
 			vfd $ELINTVFD
-			debug "ELMOTOR: $ELROT/$ELMAX (ELCENTER:$ELCENTER)"
+			debug "ELROT: $ELROT/($ELMIN-$ELMAX)"
 			ELROT=$(printf '%03d\n' "$ELROT")
 			openwebif elhost left left left ${ELROT:0:1} ${ELROT:1:1} ${ELROT:2:1} yellow | grep -v issued >&2
 			ELROTOLD=$ELROT
@@ -150,8 +151,6 @@ init_confrun() {
 		update_confrun ELROTOLD -1
 	fi
 	. "$CONFRUNFILE"
-	AZMIN=${AZMIN:-0}
-	ELMIN=${ELMIN:-0}
 	AZPORT="${AZPORT:-80}"
 	ELPORT="${ELPORT:-80}"
 }

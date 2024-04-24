@@ -6,21 +6,19 @@ AZPORT=
 AZINIT="exit exit exit exit exit exit menu up up ok down down down down down ok up ok exit up ok up up 0 0 0 0"
 # Center Azimuth of your installation
 AZCENTER=270
-# Max. reachable degree of Azimuth begining with AZMIN; you need also adjust installation Longitude in receiver's settings to AZMAX/2 East. As result, you will be able to point the motor in virtual range AZMIN..AZMAX degrees East
-AZMAX=148
-#  Min. reachable degree of Azimuth, default is 0
+# Min. reachable degree of Azimuth; you need also adjust installation Longitude in receiver's settings to 90 East (only once), sequence for OpenATV 7.3 is: exit exit exit exit exit exit menu up up ok down down down down down ok ok ok down down down 0 9 0 0 0 0 green exit exit exit exit
 AZMIN=1
+# Max. reachable degree of Azimuth
+AZMAX=148
 # Host/IP of Elevation motor's receiver OpenWebif API, leave empty if you have only one motor
 ELHOST=
 # Port of Elevation motor's receiver OpenWebif API, default is 80
 ELPORT=
 # The same as for Azimuth motor, but for Elevation. Example is for OpenATV 5.1.
 ELINIT="exit exit exit exit exit exit menu up up ok down down down down down ok down down down ok exit ok up up ok up up 0 0 0 0"
-# Center Elevation of your installation
-ELCENTER=45
+# Min. reachable degree of Azimuth; you need also adjust installation Longitude in receiver's settings to MIDDLE of the Elevation angle, for example if the motor has range +-40° and is mounted to cover 10-90° Elevation, you will setthe "Longitude" to 10+40=50° (with +-40° you can cover 10-90°), sequence for OpenATV 5.1 for this settings is: exit exit exit exit exit exit menu up up ok down down down down down ok ok ok down down down 0 5 0 0 0 0 green exit exit exit exit
+ELMIN=0
 # The same as for Azimuth motor, but for Elevation
 ELMAX=90
-# The same as for Azimuth motor, but for Elevation
-ELMIN=
 # 7-segment display device path (/dev/dbox/oled0, /proc/vfd, /dev/vfd), leave blank if none
 VFDDEV=/dev/dbox/oled0
