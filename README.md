@@ -17,8 +17,8 @@ FrankenSaT is abbreviation of <b>"Frankenstein" Satellite Tracker</b> - an affor
 [<img src="motors_thumb.jpg" alt="Azimuth and Elevation motors connected together" title="Azimuth and Elevation motors connected together" align="right"/>](motors.jpg)
 
 * Total weight and dimensions: approx. 3 kg per motor + antenna + stand.
-* Satellite rotor shaft is usually not straight but angled (35°, 45°, most likely other angles too) - this must be compensated/tolerated while construction engineering.
-* Some motors are not fast enough to track objects in higher Elevation, however those could be still usable for Elevation control.
+* Satellite rotor shaft is usually not straight but angled (35°, 45°, most likely other angles too) - this must be compensated/tolerated while construction engineering. Please note, the current picture of motors joint is **wrong**, updated pictures coming soon.
+* Some motors are not fast enough to track Azimuth of objects in higher Elevation, however those could be still usable for Elevation control.
 * Some motors have too narrow angular span (like 90° instead of 160°), however those are still usable for Elevation control.
 
 # Tested receivers
