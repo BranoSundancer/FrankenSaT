@@ -66,11 +66,23 @@ update_confrun() {
 set_pos() {
 	local FLIP=0
 	AZ=$(printf "%.6f" $(echo "$1" | tr , .))
+	EL=$(printf "%.6f" $(echo "$2" | tr , .))
 	AZINT=${AZ%.*}
+	ELINT=${EL%.*}
 	AZROT=$((AZINT-AZCENTER+AZMIN+(AZMAX-AZMIN)/2))
+	ELROT=$ELINT
 	[ $AZROT -ge 360 ] && AZROT=$((AZROT-360))
 	[ $AZROT -lt 0 ] && AZROT=$((360+AZROT))
-	[ $AZROT -gt 180 ] && FLIP=1 && AZROT=$((AZROT-180)) # AZROT=$((180-(AZROT-180))) ak motor nevie presiahnut 90st
+	if [ $AZROT -gt 180 ] ; then
+		FLIP=1
+		if [ $ELMAX -gt 90 ] ; then
+			# invert Azimuth to leverage the averted position
+			AZROT=$((AZROT-180))
+		else
+			# mirror the Azimuth
+			AZROT=$((180-(AZROT-180)))
+		fi
+	fi
 	[ $AZROT -gt $AZMAX ] && AZROT=$AZMAX
 	[ $AZROT -lt $AZMIN ] && AZROT=$AZMIN
 	if [ "$AZROT" -ne "$AZROTOLD" ] ; then
@@ -83,9 +95,6 @@ set_pos() {
 		update_confrun AZROTOLD "$AZROTOLD"
 	fi
 	if [ -n "$ELHOST" ] ; then
-		EL=$(printf "%.6f" $(echo "$2" | tr , .))
-		ELINT=${EL%.*}
-		ELROT=$ELINT
 		[ $FLIP -eq 1 ] && ELROT=$((180-ELROT))
 		[ $ELROT -gt $ELMAX ] && ELROT=$ELMAX
 		[ $ELROT -lt $ELMIN ] && ELROT=$ELMIN
