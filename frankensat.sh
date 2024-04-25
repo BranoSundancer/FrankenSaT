@@ -514,7 +514,7 @@ else
 			echo "        $SCRIPTNAME conf AZCENTER 123"
 			echo "  openwebif: access to OpenWebif API (remote keypress and power), examples:"
 			echo "          $SCRIPTNAME openwebif azhost red exit up 0 ok menu"
-			echo "          $SCRIPTNAME openwebif elhost shutdown"
+			echo "          $SCRIPTNAME openwebif elhost {shutdown|restart|reboot|powerstate}"
 			;;
 	esac
 fi
