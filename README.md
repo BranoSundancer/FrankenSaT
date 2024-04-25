@@ -1,10 +1,12 @@
 # FrankenSaT
 
-[<img src="https://raw.githubusercontent.com/BranoSundancer/FrankenSaT/main/FrankenSaT.jpg" alt="FrankenSaT" title="FrankenSaT" width="150" align="right"/>](FrankenSaT.jpg)
 FrankenSaT is abbreviation of <b>"Frankenstein" Satellite Tracker</b> - an affordable DIY antenna rotator with Azimuth (pan) and optional Elevation (tilt) controlled by PC or smartphone. Why "Frankenstein"? Like the [creature of the same name](https://en.wikipedia.org/wiki/Frankenstein%27s_monster) in a [literary novel](https://en.wikipedia.org/wiki/Frankenstein), this project is ultimately ugly - both software and construction part.
+
+https://github.com/BranoSundancer/FrankenSaT/assets/127756743/9ce1be92-3cc4-41bd-9ff8-c4fe67d2202f
 
 ## Advantages
 
+[<img src="https://raw.githubusercontent.com/BranoSundancer/FrankenSaT/main/FrankenSaT.jpg" alt="FrankenSaT" title="FrankenSaT" width="150" align="right"/>](FrankenSaT.jpg)
 * **Price and availability**: It can be made by anyone who has an old satellite receiver with [OpenATV Enigma2](https://github.com/openatv/enigma2) in a drawer and perhaps a [DiSEqC](https://en.wikipedia.org/wiki/DiSEqC) motor for a satellite dish alignment. If not, both can be found on sale at a total price lower than many other antenna pan/tilt solutions. Other parts are just common hardware store items, often already owned in shed/garage.
 * **Compatibility**: Native [Hamlib](https://github.com/Hamlib/Hamlib)'s _rotctld_ protocol support like [Gpredict](https://oz9aec.dk/gpredict/) and as a bonus, rotator control of the [Satellite Tracker (SatTrack)](https://apps.apple.com/us/app/satellite-tracker/id1438679383) app for iPhone/iPad by [Craig Vosburgh](https://www.linkedin.com/in/craigvosburgh) W0VOS.
 * **Low skill requirement**: No need to solder, all electronics is already assembled in the receiver. You just is upload a Bash script to the receiver and you will get Azimuth motor control. The same script can also control second motor for Elevation.
