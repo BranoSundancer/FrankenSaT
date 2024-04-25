@@ -1,10 +1,10 @@
 FrankenSaT
 ==========
-[<img src="https://raw.githubusercontent.com/BranoSundancer/FrankenSaT/main/FrankenSaT.jpg" alt="FrankenSaT" title="FrankenSaT" width="180" align="right"/>](FrankenSaT.jpg)
+[<img src="https://raw.githubusercontent.com/BranoSundancer/FrankenSaT/main/FrankenSaT.jpg" alt="FrankenSaT" title="FrankenSaT" width="150" align="right"/>](FrankenSaT.jpg)
 
 FrankenSaT is abbreviation of <b>"Frankenstein" Satellite Tracker</b> - an affordable DIY antenna rotator with Azimuth (pan) and optional Elevation (tilt) controlled by PC or smartphone. Why "Frankenstein"? Like the [creature of the same name](https://en.wikipedia.org/wiki/Frankenstein%27s_monster) in a [literary novel](https://en.wikipedia.org/wiki/Frankenstein), this project is ultimately ugly - both software and construction part.
 
-# Advantages
+## Advantages
 
 * **Price and availability**: It can be made by anyone who has an old satellite receiver with [OpenATV Enigma2](https://github.com/openatv/enigma2) in a drawer and perhaps a [DiSEqC](https://en.wikipedia.org/wiki/DiSEqC) motor for a satellite dish alignment. If not, both can be found on sale at a total price lower than many other antenna pan/tilt solutions. Other parts are just common hardware store items, often already owned in shed/garage.
 * **Compatibility**: Native [Hamlib](https://github.com/Hamlib/Hamlib)'s _rotctld_ protocol support like [Gpredict](https://oz9aec.dk/gpredict/) and as a bonus, rotator control of the [Satellite Tracker (SatTrack)](https://apps.apple.com/us/app/satellite-tracker/id1438679383) app for iPhone/iPad by [Craig Vosburgh](https://www.linkedin.com/in/craigvosburgh) W0VOS.
@@ -15,20 +15,20 @@ FrankenSaT is abbreviation of <b>"Frankenstein" Satellite Tracker</b> - an affor
 * **Nearly 360° Azimuth possible**: If two motors with wide angular span are used (like 160°) and the Elevation motor's center is in perpendicular to the ground, averted Azimuth angles above 180° are reachable by overturning of the Elevation above 90°. The code is prepared for this operation and flips the Azimuth position to achieve the right vector. As a result, any pass is trackable. Azimuth/Elevation angles which are not reachable by limitation of the motors are tracked by (hopefully) the nearest possible angle.
 * **No damage**: No irreversible modification of devices is needed. When you don't need the rotator anymore, you can use the receiver(s) and motor(s) for TV again.
 
-# Limitations
-[<img src="https://raw.githubusercontent.com/BranoSundancer/FrankenSaT/main/motors.jpg" alt="Azimuth and Elevation motors connected together" title="Azimuth and Elevation motors connected together" width="180" align="right"/>](motors.jpg)
+## Limitations
+[<img src="https://raw.githubusercontent.com/BranoSundancer/FrankenSaT/main/motors.jpg" alt="Azimuth and Elevation motors connected together" title="Azimuth and Elevation motors connected together" width="150" align="right"/>](motors.jpg)
 
 * Total weight and dimensions: approx. 3 kg per motor + antenna + stand.
 * Satellite rotor shaft is usually not straight but angled (35°, 45°, most likely other angles too) - this must be compensated/tolerated while construction engineering. Please note, the current picture of motors joint is **wrong**, updated pictures coming soon.
 * Some motors are not fast enough to track Azimuth of objects in higher Elevation, however those could be still usable for Elevation control for cliff/one-pass usage.
 * Some motors have too narrow angular span (like 90° instead of 160°), however those are still usable for Elevation control for cliff/one-pass usage.
 
-# Tested receivers
+## Tested receivers
 
 * Amiko Viper Combo (openATV 7.3)
 * Show Box Vitamin HD 5000 256MB Enigma 2 PRO (openATV 5.1 / EAGLE)
 
-# Credits
+## Credits
 
 * [Ahmed Al Hafoudh](https://www.linkedin.com/in/alhafoudh) - GitHub and robots engineering support
 * [Ondrej Farkas](https://www.linkedin.com/in/ondrej-farkas-919b8519) OM2FON - small satellites engineering and orbital operation support
