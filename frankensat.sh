@@ -322,6 +322,7 @@ if [ "$PARENT" = "inetd" ] || [ "$1" = "inetd" ] ; then
 						fi
 						;;
 				esac
+#				http_response 302
 				http_response 200
 				echo "Content-Type: text/plain; charset=utf-8"
 				echo
@@ -418,7 +419,9 @@ EOF
   <!-- <div class="center-point" style="font-size: 120px;">&#129517;</div> -->
 </div>
 <br>
-[<a href="/service/restart">Restart service</a>] [<a href="/service/reboot">Reboot device(s)</a>] [<a href="/service/shutdown">Shutdown device(s)</a>]
+[<a href="/service/restart">Restart service</a>]
+[<a href="/service/reboot">Reboot device(s)</a>]
+[<a href="/service/shutdown">Shutdown device(s)</a>]
 </center>
 <script type="text/javascript">
 <!--
