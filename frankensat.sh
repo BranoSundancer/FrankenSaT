@@ -295,10 +295,10 @@ if [ "$PARENT" = "inetd" ] || [ "$1" = "inetd" ] ; then
 			http_response 302
 			;;
 		arduino)
-			# API for VosWorx Satellite Tracker (SatTrack)
-			# Video: https://youtu.be/uEpd_ZVcOg4
-			# Web: https://www.vosworx.com/2019/04/27/satellite-tracker-sattrack/
+			# API for Satellite Tracker (SatTrack) app y Craig Vosburgh W0VOS
 			# App Store: https://apps.apple.com/us/app/satellite-tracker/id1438679383
+			# Web: https://www.vosworx.com/2019/04/27/satellite-tracker-sattrack/
+			# Video: https://youtu.be/uEpd_ZVcOg4
 			if [ "${URI[1]}" = "rotor" ] && [ "${URI[2]}" = "azelplr" ] ; then
 				http_response 200
 				echo "Content-Type: text/plain; charset=utf-8"
