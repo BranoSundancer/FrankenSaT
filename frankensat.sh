@@ -2,7 +2,7 @@
 #
 # FrankenSaT - "Frankenstein" Satellite Tracker
 # https://github.com/BranoSundancer/FrankenSaT
-# Version: 2.1
+# Version: 2.2
 #
 # Author: Branislav Vartik
 #
@@ -59,7 +59,7 @@ update_confrun() {
 	if grep -q "^$1=" "$CONFRUNFILE" ; then
 		sed -ri "s/^($1=)(.+)$/\1$2/" "$CONFRUNFILE"
 	else
-		echo "$1=$2" >> "$CONFRUNFILE"
+		echo "$1=$2" >>"$CONFRUNFILE"
 	fi
 }
 
@@ -171,6 +171,11 @@ init_vfd() {
 }
 
 init_motors() {
+	AZ=0.000000
+	EL=0.000000
+	update_confrun AZROTOLD -1
+	update_confrun ELROTOLD -1
+	ELROTOLD=000
 	debug -n "Waiting for Azimuth motor OpenWebif availability: "
 	while ! openwebif azhost powerstate | grep -q instandby.*false ; do debug -n . ; sleep 1 ; done
 	debug "Ready."
@@ -201,8 +206,6 @@ listen() {
 interpret() {
 	# rotctl interpreter
 	trap init_confrun USR1
-	AZ=0.000000
-	EL=0.000000
 	vfd CONN
 	debug "Connected."
 	while read line ; do
@@ -222,9 +225,16 @@ interpret() {
 			set_pos $(echo "$line" | cut -d " " -f 2) $(echo "$line" | cut -d " " -f 3)
 			;;
 		S|stop)
-			# Dummy functonality, in fact we can't stop motors
 			send "RPRT 0"
 			vfd STOP
+			init_motors
+			vfd STOP
+			;;
+		R|reset)
+			send "RPRT 0"
+			vfd REST
+			set_pos $AZCENTER $((ELMIN+(ELMAX-$ELMIN)/2))
+			vfd REST
 			;;
 		q)
 #			send "RPRT 0"
@@ -275,9 +285,9 @@ http_response() {
 shopt -s extglob
 if [ "$PARENT" = "inetd" ] || [ "$1" = "inetd" ] ; then
 	# inetd is our HTTP listener, install with:
-	# echo "8080 stream tcp nowait root /home/root/frankensat.sh" >> /etc/inetd.conf ; /etc/init.d/inetd.busybox restart
+	# echo "8080 stream tcp nowait root /home/root/frankensat.sh" >>/etc/inetd.conf ; /etc/init.d/inetd.busybox restart
 	# for port 80 you need to reconfigure OpenWebif port and static IP or DHCP reservation (OpenWebif still listens on localhost, so you need to be specific with the listening IP), then install with this:
-	# init 4 ; echo "$(ip -f inet -o addr show | sed -n '2p' | cut -d\  -f 7 | cut -d/ -f 1 | sed -r "s/(.+)/\1:/")80 stream tcp nowait root /home/root/frankensat.sh" >> /etc/inetd.conf ; /etc/init.d/inetd.busybox restart ; echo "config.OpenWebif.port=81" >> /etc/enigma2/settings ; init 3
+	# init 4 ; echo "$(ip -f inet -o addr show | sed -n '2p' | cut -d\  -f 7 | cut -d/ -f 1 | sed -r "s/(.+)/\1:/")80 stream tcp nowait root /home/root/frankensat.sh" >>/etc/inetd.conf ; /etc/init.d/inetd.busybox restart ; echo "config.OpenWebif.port=81" >>/etc/enigma2/settings ; init 3
 	init_confrun
 	declare -a HTTP_RESPONSE=([200]="OK" [302]="Found" [404]="Not Found")
 	line=foo
@@ -299,11 +309,22 @@ if [ "$PARENT" = "inetd" ] || [ "$1" = "inetd" ] ; then
 			# App Store: https://apps.apple.com/us/app/satellite-tracker/id1438679383
 			# Web: https://www.vosworx.com/2019/04/27/satellite-tracker-sattrack/
 			# Video: https://youtu.be/uEpd_ZVcOg4
-			if [ "${URI[1]}" = "rotor" ] && [ "${URI[2]}" = "azelplr" ] ; then
+			if [ "${URI[1]}" = "rotor" ] ; then
+				case "${URI[2]}" in
+					azelplr)
+						set_pos "${URI[3]}" "${URI[4]}"
+						;;
+					reset)
+						if [ "$STOPONRESET" = "1" ] ; then
+							init_motors
+						else
+							set_pos $AZCENTER $((ELMIN+(ELMAX-$ELMIN)/2))
+						fi
+						;;
+				esac
 				http_response 200
 				echo "Content-Type: text/plain; charset=utf-8"
 				echo
-				set_pos "${URI[3]}" "${URI[4]}"
 			else
 				http_response 404
 			fi
