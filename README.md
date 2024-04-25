@@ -1,6 +1,6 @@
 FrankenSaT
 ==========
-[<img src="FrankenSaT_thumb.jpg" alt="FrankenSaT" title="FrankenSaT" align="right"/>](FrankenSaT.jpg)
+[<img src="https://raw.githubusercontent.com/BranoSundancer/FrankenSaT/main/FrankenSaT.jpg" alt="FrankenSaT" title="FrankenSaT" width="180" align="right"/>](FrankenSaT.jpg)
 
 FrankenSaT is abbreviation of <b>"Frankenstein" Satellite Tracker</b> - an affordable DIY antenna rotator with Azimuth (pan) and optional Elevation (tilt) controlled by PC or smartphone. Why "Frankenstein"? Like the [creature of the same name](https://en.wikipedia.org/wiki/Frankenstein%27s_monster) in a [literary novel](https://en.wikipedia.org/wiki/Frankenstein), this project is ultimately ugly - both software and construction part.
 
@@ -16,7 +16,7 @@ FrankenSaT is abbreviation of <b>"Frankenstein" Satellite Tracker</b> - an affor
 * **No damage**: No irreversible modification of devices is needed. When you don't need the rotator anymore, you can use the receiver(s) and motor(s) for TV again.
 
 # Limitations
-[<img src="motors_thumb.jpg" alt="Azimuth and Elevation motors connected together" title="Azimuth and Elevation motors connected together" align="right"/>](motors.jpg)
+[<img src="https://raw.githubusercontent.com/BranoSundancer/FrankenSaT/main/motors.jpg" alt="Azimuth and Elevation motors connected together" title="Azimuth and Elevation motors connected together" width="180" align="right"/>](motors.jpg)
 
 * Total weight and dimensions: approx. 3 kg per motor + antenna + stand.
 * Satellite rotor shaft is usually not straight but angled (35°, 45°, most likely other angles too) - this must be compensated/tolerated while construction engineering. Please note, the current picture of motors joint is **wrong**, updated pictures coming soon.
