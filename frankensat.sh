@@ -230,7 +230,7 @@ interpret() {
 			init_motors
 			vfd STOP
 			;;
-		R|reset)
+		R|reset|K|park)
 			send "RPRT 0"
 			vfd REST
 			set_pos $AZCENTER $((ELMIN+(ELMAX-$ELMIN)/2))
