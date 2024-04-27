@@ -236,7 +236,7 @@ interpret() {
 			set_pos $AZCENTER $((ELMIN+(ELMAX-$ELMIN)/2))
 			vfd REST
 			;;
-		q)
+		Q|q)
 #			send "RPRT 0"
 			vfd QUIT
 			sleep 0.5
