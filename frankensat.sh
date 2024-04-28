@@ -162,6 +162,10 @@ init_confrun() {
 	. "$CONFRUNFILE"
 	AZPORT="${AZPORT:-80}"
 	ELPORT="${ELPORT:-80}"
+	if [ ! -n "$PARKAZ" ] ; then
+		PARKAZ=$AZCENTER
+		PARKEL=$ELMIN
+	fi
 }
 
 init_vfd() {
@@ -226,15 +230,19 @@ interpret() {
 			;;
 		S|stop)
 			send "RPRT 0"
-			vfd STOP
 			init_motors
-			vfd STOP
 			;;
-		R|reset|K|park)
+		R|reset)
 			send "RPRT 0"
-			vfd REST
-			set_pos $AZCENTER $((ELMIN+(ELMAX-$ELMIN)/2))
-			vfd REST
+			if [ -n "$RESETAZ" ] ; then
+				set_pos $RESETAZ $RESETEL
+			else
+				init_motors
+			fi
+			;;
+		K|park)
+			send "RPRT 0"
+			set_pos $PARKAZ $PARKEL
 			;;
 		Q|q)
 #			send "RPRT 0"
@@ -315,10 +323,10 @@ if [ "$PARENT" = "inetd" ] || [ "$1" = "inetd" ] ; then
 						set_pos "${URI[3]}" "${URI[4]}"
 						;;
 					reset)
-						if [ "$STOPONRESET" = "1" ] ; then
-							init_motors
+						if [ -n "$RESETAZ" ] ; then
+							set_pos $RESETAZ $RESETEL
 						else
-							set_pos $AZCENTER $((ELMIN+(ELMAX-$ELMIN)/2))
+							init_motors
 						fi
 						;;
 				esac
@@ -329,6 +337,28 @@ if [ "$PARENT" = "inetd" ] || [ "$1" = "inetd" ] ; then
 			else
 				http_response 404
 			fi
+			;;
+		rotctl)
+			# emulation of rotctl commands bypassing the daemon in the same way like arduino/rotor URI, but with 302
+			case "${URI[1]}" in
+				P|set_pos)
+					set_pos ${URI[2]} ${URI[3]}
+					;;
+				S|stop)
+					init_motors
+					;;
+				R|reset)
+					if [ -n "$RESETAZ" ] ; then
+						set_pos $RESETAZ $RESETEL
+					else
+						init_motors
+					fi
+					;;
+				K|park)
+					set_pos $PARKAZ $PARKEL
+					;;
+			esac
+			http_response 302
 			;;
 		"")
 			http_response 200
@@ -393,9 +423,8 @@ a:hover { text-decoration: underline; }
 </head>
 <body>
 <center>
-Current AZCENTER:<br>
-<br>
 <div id="compass">
+<br><br><br><br><br><br><br><span style="font-weight: bold; font-size: 20px">AZCENTER:</span>
 EOF
 			for i in 90 113 135 158 180 203 225 248 270 293 315 338 0 23 45 68 ; do
 				echo "<div class=\"point\"><a href=\"/service/conf/AZCENTER/$i\"><div>$i&deg;</div></a></div>"
@@ -418,10 +447,8 @@ EOF
   </div>
   <!-- <div class="center-point" style="font-size: 120px;">&#129517;</div> -->
 </div>
-<br>
-[<a href="/service/restart">Restart service</a>]
-[<a href="/service/reboot">Reboot device(s)</a>]
-[<a href="/service/shutdown">Shutdown device(s)</a>]
+<br>[<a href="/rotctl/stop">Stop motor(s)</a>] [<a href="/rotctl/reset">Reset motor(s)</a>] [<a href="/rotctl/park">Park motor(s)</a>]
+<br>[<a href="/service/restart">Restart service</a>] [<a href="/service/reboot">Reboot device(s)</a>] [<a href="/service/shutdown">Shutdown device(s)</a>]
 </center>
 <script type="text/javascript">
 <!--
