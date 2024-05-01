@@ -2,7 +2,7 @@
 #
 # FrankenSaT - "Frankenstein" Satellite Tracker
 # https://github.com/BranoSundancer/FrankenSaT
-# Version: 2.2
+# Version: 2.3
 #
 # Author: Branislav Vartik
 #
@@ -114,6 +114,7 @@ openwebif() {
 	local REMOTEHOST="$AZHOST"
 	local REMOTEPORT="$AZPORT"
 	local COMMAND=
+	local cmd=
 	if [ "$1" = "elhost" ] ; then
 		REMOTEHOST="$ELHOST"
 		REMOTEPORT="$ELPORT"
@@ -215,45 +216,57 @@ interpret() {
 	while read line ; do
 		line=$(echo "$line" | tr -d '\r')
 		debug "RECV: $line"
-		cmd=$(echo "$line" | cut -d " " -f 1)
-		case $cmd in
-		p|get_pos)
-			# send "$AZ\n$EL"
-			# FIXME: Probably must be both lines send in single packet, otherwise gpredict decodes it as ERROR
-			# workaround " " according to https://adventurist.me/posts/0136
-			send " "
-			[ -n "$ELHOST" ] && grep -q "^$AZINTVFD\$" $VFDFILE && vfd $ELINTVFD || vfd $AZINTVFD
-			;;
-		P|set_pos)
-			send "RPRT 0"
-			set_pos $(echo "$line" | cut -d " " -f 2) $(echo "$line" | cut -d " " -f 3)
-			;;
-		S|stop)
-			send "RPRT 0"
-			init_motors
-			;;
-		R|reset)
-			send "RPRT 0"
-			if [ -n "$RESETAZ" ] ; then
-				set_pos $RESETAZ $RESETEL
-			else
+		rotctlcmd=(${line//\// })
+		case ${rotctlcmd[0]} in
+			p|get_pos)
+				# send "$AZ\n$EL"
+				# FIXME: Probably must be both lines send in single packet, otherwise gpredict decodes it as ERROR
+				# workaround " " according to https://adventurist.me/posts/0136
+				send " "
+				[ -n "$ELHOST" ] && grep -q "^$AZINTVFD\$" $VFDFILE && vfd $ELINTVFD || vfd $AZINTVFD
+				;;
+			P|set_pos)
+				send "RPRT 0"
+				set_pos ${rotctlcmd[1]} ${rotctlcmd[2]}
+				;;
+			S|stop)
+				send "RPRT 0"
 				init_motors
-			fi
-			;;
-		K|park)
-			send "RPRT 0"
-			set_pos $PARKAZ $PARKEL
-			;;
-		Q|q)
-#			send "RPRT 0"
-			vfd QUIT
-			sleep 0.5
-			exit
-			;;
-		*)
-			debug "UNIMPLEMENTED"
-			send "RPRT 0"
-			;;
+				;;
+			R|reset)
+				send "RPRT 0"
+				if [ -n "$RESETAZ" ] ; then
+					set_pos $RESETAZ $RESETEL
+				else
+					init_motors
+				fi
+				;;
+			K|park)
+				send "RPRT 0"
+				set_pos $PARKAZ $PARKEL
+				;;
+			Q|q)
+				# rotctl does not send RPRT 0, neither we do
+				# send "RPRT 0"
+				vfd QUIT
+				sleep 0.5
+				exit
+				;;
+			w|send_cmd)
+				send "RPRT 0"
+				case ${rotctlcmd[1]} in
+					az)
+						set_pos $((${AZ%.*}+rotctlcmd[2])) $EL
+						;;
+					el)
+						set_pos $AZ $((${EL%.*}+rotctlcmd[2]))
+						;;
+				esac
+				;;
+			*)
+				debug "UNIMPLEMENTED"
+				send "RPRT 0"
+				;;
 		esac
 	done
 	vfd DISC
