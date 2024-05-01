@@ -536,6 +536,7 @@ else
 			fi
 			;;
 		daemon)
+			# internal mode
 			init_confrun override
 			init_vfd
 			init_motors
@@ -543,6 +544,7 @@ else
 			killtree $$ parent 2>/dev/null
 			;;
 		interpret)
+			# internal mode
 			interpret
 			;;
 		reboot)
