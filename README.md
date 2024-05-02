@@ -35,6 +35,7 @@ https://github.com/BranoSundancer/FrankenSaT/assets/127756743/9ce1be92-3cc4-41bd
 * [Ondrej Farkas](https://www.linkedin.com/in/ondrej-farkas-919b8519) OM2FON - small satellites engineering and orbital operation support
 * Jaroslav Stanko OM1AJS - SAT/DiSEqC devices support
 * [OM3KFF](https://om3kff.sk/) ham club members - satellites observation and communication support
+* [Craig Vosburgh](https://www.linkedin.com/in/craigvosburgh) W0VOS - SatTrack app API specification
 * [Icons8](https://icons8.com/) - favicon
 
 [![Per Aspera Ad Astra](https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/Per_aspera_ad_astra%2C_1894.jpg/640px-Per_aspera_ad_astra%2C_1894.jpg)](https://simple.wikipedia.org/wiki/Per_aspera_ad_astra)

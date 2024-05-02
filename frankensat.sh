@@ -322,7 +322,7 @@ if [ "$PARENT" = "inetd" ] || [ "$1" = "inetd" ] ; then
 	URI=(${REQUEST_URI//\// })
 	case ${URI[0]} in
 		service)
-			./frankensat.sh ${URI[1]} "${URI[2]}" "${URI[3]}" >/dev/null 2>&1
+			$SCRIPTDIR/$SCRIPTNAME ${URI[1]} "${URI[2]}" "${URI[3]}" >/dev/null 2>&1
 			http_response 302
 			;;
 		arduino)
@@ -330,29 +330,58 @@ if [ "$PARENT" = "inetd" ] || [ "$1" = "inetd" ] ; then
 			# App Store: https://apps.apple.com/us/app/satellite-tracker/id1438679383
 			# Web: https://www.vosworx.com/2019/04/27/satellite-tracker-sattrack/
 			# Video: https://youtu.be/uEpd_ZVcOg4
+			http_response 200
+			echo "Content-Type: text/plain; charset=utf-8"
+			echo
 			if [ "${URI[1]}" = "rotor" ] ; then
 				case "${URI[2]}" in
 					azelplr)
+						echo "AZELPLR"
 						set_pos "${URI[3]}" "${URI[4]}"
+						echo "SUCCESS"
 						;;
 					reset)
+						echo "RESET"
 						if [ -n "$RESETAZ" ] ; then
 							set_pos $RESETAZ $RESETEL
 						else
 							init_motors
 						fi
+						echo "SUCCESS"
+						;;
+					config)
+						echo "CONFIG"
+						echo "SUCCESS"
+						echo -n "Az=SERVO El="
+						if [ -n "$ELHOST" ] ; then
+							echo -n "SERVO"
+						else
+							echo -n "NONE"
+						fi
+						echo " Plr=NONE Sensor=NONE"
+						;;
+					setzero)
+						echo "SETZERO"
+						AZCENTERDELTA=$(printf "%.0f" ${URI[3]%.*})
+						if [ $AZCENTERDELTA -ne 0 ] ; then
+							AZCENTER=$((AZCENTER+AZCENTERDELTA))
+							[ $AZCENTER -lt 0 ] && AZCENTER=$((AZCENTER+360))
+							[ $AZCENTER -ge 360 ] && AZCENTER=$((AZCENTER-360))
+							$SCRIPTDIR/$SCRIPTNAME conf AZCENTER $AZCENTER
+							vfd C$(printf '%03d\n' "$AZCENTER")
+						fi
+						echo "SUCCESS"
+						;;
+					*)
+						echo "ERROR"
 						;;
 				esac
-#				http_response 302
-				http_response 200
-				echo "Content-Type: text/plain; charset=utf-8"
-				echo
 			else
-				http_response 404
+				echo "ERROR"
 			fi
 			;;
 		rotctl)
-			# emulation of rotctl commands bypassing the daemon in the same way like arduino/rotor URI, but with 302
+			# emulation of rotctl commands bypassing the daemon similar to arduino/rotor URI, but with 302
 			case "${URI[1]}" in
 				P|set_pos)
 					set_pos ${URI[2]} ${URI[3]}
