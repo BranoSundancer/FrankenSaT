@@ -2,7 +2,7 @@
 #
 # FrankenSaT - "Frankenstein" Satellite Tracker
 # https://github.com/BranoSundancer/FrankenSaT
-# Version: 2.3
+# Version: 2.4
 #
 # Author: Branislav Vartik
 #
