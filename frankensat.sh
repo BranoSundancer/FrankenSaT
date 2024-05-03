@@ -216,7 +216,7 @@ interpret() {
 	while read line ; do
 		line=$(echo "$line" | tr -d '\r')
 		debug "RECV: $line"
-		rotctlcmd=(${line//\// })
+		rotctlcmd=(${line//\\/ })
 		case ${rotctlcmd[0]} in
 			p|get_pos)
 				# send "$AZ\n$EL"
