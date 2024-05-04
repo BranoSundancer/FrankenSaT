@@ -1,13 +1,5 @@
 #!/bin/bash
 #
-# FrankenSaT - "Frankenstein" Satellite Tracker
-# https://github.com/BranoSundancer/FrankenSaT
-# Version: 2.4
-#
-# Author: Branislav Vartik
-#
-# See LICENSE for licensing information.
-#
 ### BEGIN INIT INFO
 # Provides: frankensat
 # Default-Start:  2345
@@ -15,6 +7,13 @@
 # Short-Description: FrankenSaT
 # Description: "Frankenstein" Satellite Tracker
 ### END INIT INFO
+
+APPNAME="FrankenSaT"
+APPDESCRIPTION="\"Frankenstein\" Satellite Tracker"
+APPVERSION="2.5"
+APPAUTHOR="Branislav Vartik OM1ATB"
+APPURL="https://github.com/BranoSundancer/FrankenSaT"
+APPLICENSE="MIT"
 
 SCRIPTREAL=$(realpath ${BASH_SOURCE[0]})
 SCRIPTDIR="$( cd "$( dirname "$SCRIPTREAL" )" && pwd )"
@@ -218,6 +217,8 @@ interpret() {
 		debug "RECV: $line"
 		rotctlcmd=(${line//\\/ })
 		case ${rotctlcmd[0]} in
+			"")
+				;;
 			p|get_pos)
 				# send "$AZ\n$EL"
 				# FIXME: Probably must be both lines send in single packet, otherwise gpredict decodes it as ERROR
@@ -262,6 +263,76 @@ interpret() {
 						set_pos $AZ $((${EL%.*}+rotctlcmd[2]))
 						;;
 				esac
+				;;
+			_|get_info)
+				send "$APPNAME"
+				;;
+			1|dump_caps)
+				send "Caps dump for model:	1"
+				send "Model name:		$APPNAME"
+				send "Mfg name:		$APPAUTHOR"
+				send "Backend version:	$APPVERSION"
+				send "Backend copyright:	$APPLICENSE"
+				send "Backend status:		Stable"
+				if [ -n "$ELHOST" ] ; then
+					send "Rot type:		Az-El"
+				else
+					send "Rot type:		Az"
+				fi
+				send "Port type:		None"
+				send "Write delay:		0mS, timeout 0mS, 0 retries"
+				send "Post Write delay:	0mS"
+				send "Status flags: "
+				send "Get functions: "
+				send "Set functions: "
+				send "Get level: "
+				send "Set level: "
+				send "Get parameters: "
+				send "Set parameters: "
+				send "Min Azimuth:		-180.00"
+				send "Max Azimuth:		450.00"
+				send "Min Elevation:		0.00"
+				send "Max Elevation:		90.00"
+				send "Has priv data:		N"
+				send "Has Init:		Y"
+				send "Has Cleanup:		Y"
+				send "Has Open:		Y"
+				send "Has Close:		Y"
+				send "Can set Conf:		N"
+				send "Can get Conf:		N"
+				send "Can set Position:	Y"
+				send "Can get Position:	Y"
+				send "Can Stop:		Y"
+				send "Can Park:		Y"
+				send "Can Reset:		Y"
+				send "Can Move:		N"
+				send "Can get Info:		Y"
+				send "Can get Status:		Y"
+				send "Can set Func:	N"
+				send "Can get Func:	N"
+				send "Can set Level:	N"
+				send "Can get Level:	N"
+				send "Can set Param:	N"
+				send "Can get Param:	N"
+				send ""
+				send "Overall backend warnings: 0"
+				send "RPRT 0"
+END
+				;;
+			dump_state)
+				send "1"
+				send "1"
+				send "min_az=-180.000000"
+				send "max_az=450.000000"
+				send "min_el=0.000000"
+				send "max_el=90.000000"
+				send "south_zero=0"
+				if [ -n "$ELHOST" ] ; then	
+					send "rot_type=AzEl"
+				else
+					send "rot_type=Az"
+				fi
+				send "done"
 				;;
 			*)
 				debug "UNIMPLEMENTED"
@@ -410,7 +481,9 @@ Content-Type: text/html; charset=utf-8
 <!DOCTYPE html>
 <html>
 <head>
-<title>FrankenSaT</title>
+EOF
+echo "<title>$APPNAME</title>"
+cat <<'EOF'
 <link id="favicon" rel="shortcut icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAAB40lEQVR4nJ2SP4gaQRjFv8ul1GJFdnd03XHBXf824lpIClNeEW0sorEQbKNWio2oaGNAspCUIaaxSBVIdwjXpkqR4hRSBMRCDCFFMIkc4n5hlktybO6Uy+tmhvfjDe8B/JWPENIHgCP4D/k1Tfva7/d3giC8uy0kpqrqZj6fYz6fx0qlYgqC8P42kId+vx+z2SxOJhPsdDpYKBTQ6/WeX76LAHBvH+AIAF5JkoTVahUHgwGOx2OklJoAoIbD4c/lcnkjSdLTQ5CXhBBst9uYyWTQMAxTluUfy+USmVqt1pZS+uwgxOFw7CilqOs6rlYrvKpSqbQFgEeHIA9UVd3azeysaRoCQHEfAERR/Dibzf4xRyIRZj4FgLvXGgkhn3Rd34RCoQsWf71e/zEnk0kcDoemoihLWZbfXFsxx3E/6/W6Zer1ephIJHA6nVqxfT4fplIpHI1GWCwWTVEU2dju2BknsVjMbDQaFiQYDO54nrdiO53OL6wdwzCw2WxirVZDt9t9bk/yOJ1OYzQaNVmSeDzOzPcB4BgAnng8HmsnbGy5XA673S66XK6zqwBWzzcA+MBx3AXP899t7VhjYxtZLBa/G3l+UxkJNnHbnbUTRVEwEAgw89sbG9kjBnkBAK8vvwa/AGUo9+F30wGPAAAAAElFTkSuQmCC">
 <link rel="apple-touch-icon" type="image/png" href="data:image/png;base64,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">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -610,6 +683,11 @@ else
 			echo "  openwebif: access to OpenWebif API (remote keypress and power), examples:"
 			echo "          $SCRIPTNAME openwebif azhost red exit up 0 ok menu"
 			echo "          $SCRIPTNAME openwebif elhost {shutdown|restart|reboot|powerstate}"
+			echo
+			echo "$APPNAME $APPVERSION - $APPDESCRIPTION"
+			echo "Author: $APPAUTHOR"
+			echo "URL: $APPURL"
+			echo "License: $APPLICENSE"
 			;;
 	esac
 fi
