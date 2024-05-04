@@ -10,7 +10,7 @@
 
 APPNAME="FrankenSaT"
 APPDESCRIPTION="\"Frankenstein\" Satellite Tracker"
-APPVERSION="2.5"
+APPVERSION="2.6"
 APPAUTHOR="Branislav Vartik OM1ATB"
 APPURL="https://github.com/BranoSundancer/FrankenSaT"
 APPLICENSE="MIT"
@@ -317,7 +317,6 @@ interpret() {
 				send ""
 				send "Overall backend warnings: 0"
 				send "RPRT 0"
-END
 				;;
 			dump_state)
 				send "1"
@@ -349,14 +348,14 @@ start() {
 	if [ -e "$PIDFILE" ] && [ -e "/proc/$(<$PIDFILE)/status" ] ; then
 		echo "Already running."
 	else
-		echo -n "Starting $SCRIPTNAME: "
+		echo -n "Starting $APPNAME: "
 		start-stop-daemon -S -b -m -p $PIDFILE $SCRIPTDIR/$SCRIPTNAME daemon
 		echo "Done."
 	fi
 }
 
 stop() {
-	echo -n "Stopping $SCRIPTNAME: "
+	echo -n "Stopping $APPNAME: "
 	killtree $(<$PIDFILE) 2>/dev/null
 	echo "Done."
 }
@@ -419,6 +418,7 @@ if [ "$PARENT" = "inetd" ] || [ "$1" = "inetd" ] ; then
 							init_motors
 						fi
 						echo "SUCCESS"
+						vfd RESET
 						;;
 					config)
 						echo "CONFIG"
@@ -430,6 +430,7 @@ if [ "$PARENT" = "inetd" ] || [ "$1" = "inetd" ] ; then
 							echo -n "NONE"
 						fi
 						echo " Plr=NONE Sensor=NONE"
+						vfd SATTRACK
 						;;
 					setzero)
 						echo "SETZERO"
@@ -459,6 +460,7 @@ if [ "$PARENT" = "inetd" ] || [ "$1" = "inetd" ] ; then
 					;;
 				S|stop)
 					init_motors
+					vfd STOP
 					;;
 				R|reset)
 					if [ -n "$RESETAZ" ] ; then
@@ -466,9 +468,11 @@ if [ "$PARENT" = "inetd" ] || [ "$1" = "inetd" ] ; then
 					else
 						init_motors
 					fi
+					vfd RESET
 					;;
 				K|park)
 					set_pos $PARKAZ $PARKEL
+					vfd PARK
 					;;
 			esac
 			http_response 302
@@ -652,15 +656,18 @@ else
 		reboot)
 			[ -n "$ELHOST" ] && openwebif elhost reboot
 			openwebif azhost reboot >/dev/null 2>&1
+			vfd REBOOT
 			;;
 		shutdown)
 			[ -n "$ELHOST" ] && openwebif elhost shutdown
 			openwebif azhost shutdown >/dev/null 2>&1
+			vfd SHUTDOWN
 			;;
 		conf)
 			update_confrun "$2" "$3"
 			INTERPRET=$(grep -l '/bin/bash$' /dev/null $(grep -l '^interpret$' /proc/*/cmdline 2>/dev/null) 2>/dev/null | cut -d/ -f 3 | head -n 1)
 			[ -n "$INTERPRET" ] && kill -USR1 $INTERPRET
+			vfd CONF
 			;;
 		openwebif)
 			shift
@@ -685,8 +692,8 @@ else
 			echo "          $SCRIPTNAME openwebif elhost {shutdown|restart|reboot|powerstate}"
 			echo
 			echo "$APPNAME $APPVERSION - $APPDESCRIPTION"
-			echo "Author: $APPAUTHOR"
 			echo "URL: $APPURL"
+			echo "Author: $APPAUTHOR"
 			echo "License: $APPLICENSE"
 			;;
 	esac
