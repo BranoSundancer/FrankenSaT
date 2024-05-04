@@ -19,7 +19,7 @@ https://github.com/BranoSundancer/FrankenSaT/assets/127756743/9ce1be92-3cc4-41bd
 ## Limitations
 
 [<img src="https://raw.githubusercontent.com/BranoSundancer/FrankenSaT/main/motors.jpg" alt="Azimuth and Elevation motors connected together" title="Azimuth and Elevation motors connected together" width="150" align="right"/>](motors.jpg)
-* Total weight and dimensions: approx. 3 kg per motor + antenna + stand.
+* Total weight and dimensions: approx. 3 kg per motor + antenna + stand totals the weight over 10 kg, which in combination with dimensions limits portability options.
 * Satellite rotor shaft is usually not straight but angled (35°, 45°, most likely other angles too) - this must be compensated/tolerated while construction engineering.
 * Some motors are not fast enough to track Azimuth of objects in higher Elevation, however those could be still usable for Elevation control.
 * Some motors have too narrow angular span (like 90° instead of 160°), however those are still usable for Elevation control for cliff/one-pass usage.
