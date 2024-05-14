@@ -29,6 +29,10 @@ https://github.com/BranoSundancer/FrankenSaT/assets/127756743/9ce1be92-3cc4-41bd
 * Amiko Viper Combo (openATV 7.3)
 * Show Box Vitamin HD 5000 256MB Enigma 2 PRO (openATV 5.1 / EAGLE)
 
+## Transceiver control
+
+Doppler frequency shift is  another significant aspcet of the objective. It is possible to automate it also with Gpredict, you just need a rig which is controllable using Hamlib's rigctld. If you don't have one, you could try (really cheap) Quansheng UV-K5 with [quansheng-dock-fw](https://github.com/nicsure/quansheng-dock-fw) and Windows desktop software [Quansheng Dock (mod/om1atb)](https://github.com/BranoSundancer/QuanshengDock-mod-om1atb/releases) which allows that.
+
 ## Credits
 
 * [Ahmed Al Hafoudh](https://www.linkedin.com/in/alhafoudh) - GitHub and robots engineering support
