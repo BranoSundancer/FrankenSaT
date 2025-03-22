@@ -6,7 +6,7 @@ https://github.com/BranoSundancer/FrankenSaT/assets/127756743/9ce1be92-3cc4-41bd
 
 ## TL;DR: How it works?
 
-One or a pair "standard" Linux TV SAT receivers (with **openATV**) are used without any HW/SW modification and joined to a network. A single Bash script is uploaded and installed as a service to one of them. In the **openATV Linux UI**, the motor can be positioned at a specific angle. Additionally, **openATV provides a virtual remote control (HTTP API)**. The SW part **navigates through the menu** during initialization and **sets the motor's angle** accordingly, as requested by **commands received from rotctl client** (external satellite tracking software). If an elevation device is available in addition to azimuth control, the script operates both receivers simultaneously. This approach was chosen due to the lack of documentation on the driver and the time required for reverse engineering. **Unorthodox, but it works.**
+One or a pair "standard" DiSEqC motors controlled by Linux TV SAT receivers (with **openATV Enigma2**) are used without any HW/SW modification and joined to a network. A single Bash script is uploaded and installed as a service to one of them. In the **openATV Enigma2 UI**, the motor can be positioned at a specific angle. Additionally, **openATV Enigma2 provides a virtual remote control (HTTP API)**. The SW part **navigates through the menu** during initialization and **sets the motor's angle** accordingly, as requested by **commands received from rotctl client** (external satellite tracking software). If an elevation device is available in addition to azimuth control, the script operates both receivers simultaneously. This approach was chosen due to the lack of documentation on the driver and the time required for reverse engineering. **Rather unorthodox approach, but it works.**
 
 ## Advantages
 
@@ -53,9 +53,9 @@ Then I realized: **TV SAT receivers already have control electronics and a drive
 
 ### Proof of Concept
 
-I had no idea what to expect, having never worked with such devices. Using a remote control, I moved the motor as if pointing at a stationary satellite, but that wasn’t enough—I needed **precise step-by-step rotation on demand**. In the **openATV UI**, I found an option for this.
+I had no idea what to expect, having never worked with such devices. Using a remote control, I moved the motor as if pointing at a stationary satellite, but that wasn’t enough—I needed **precise step-by-step rotation on demand**. In the **openATV Enigma2 UI**, I found an option for this.
 
-I attempted to bypass the UI to send commands directly to the driver, but despite studying the available source code, I couldn’t find the right method. Then I realized: **Why bother? openATV has a web interface with a virtual remote control!**
+I attempted to bypass the UI to send commands directly to the driver, but despite studying the available source code, I couldn’t find the right method. Then I realized: **Why bother? openATV Enigma2 has a web interface with a virtual remote control!**
 
 To rotate the motor step by step, I only needed to navigate to the correct menu and adjust the angle. I captured the necessary HTTP commands from the virtual remote and immediately gained **full programmatic control** over the menu—and thus the motor—via Bash scripting.
 
