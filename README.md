@@ -4,9 +4,7 @@ FrankenSaT is an abbreviation of <b>"Frankenstein" Satellite Tracker</b> - an af
 
 https://github.com/BranoSundancer/FrankenSaT/assets/127756743/9ce1be92-3cc4-41bd-9ff8-c4fe67d2202f
 
-## TL;DR: How it works?
-
-One or a pair "standard" DiSEqC motors controlled by Linux TV SAT receivers (with **openATV Enigma2**) are used without any HW/SW modification and joined to a network. A single Bash script is uploaded and installed as a service to one of them. In the **openATV Enigma2 UI**, the motor can be positioned at a specific angle. Additionally, **openATV Enigma2 provides a virtual remote control (HTTP API)**. The SW part **navigates through the menu** during initialization and **sets the motor's angle** accordingly, as requested by **commands received from rotctl client** (external satellite tracking software). If an elevation device is available in addition to azimuth control, the script operates both receivers simultaneously. This approach was chosen due to the lack of documentation on the driver and the time required for reverse engineering. **Rather unorthodox approach, but it works.**
+> **TL;DR:** One or a pair DiSEqC motors controlled by Linux TV SAT receivers (with **openATV Enigma2**) are used without any HW/SW modification and joined to a network. A single Bash script is uploaded and installed as a service to one of them. In the **openATV Enigma2 UI**, the motor can be positioned at a specific angle. Additionally, **openATV Enigma2 provides a virtual remote control (HTTP API)**. The SW part **navigates through the menu** during initialization and **sets the motor's angle** accordingly, as requested by **commands received from rotctl client** (external satellite tracking software). If an elevation device is available in addition to azimuth control, the script operates both receivers simultaneously. This approach was chosen due to the lack of documentation on the driver and the time required for reverse engineering. **Rather unorthodox approach, but it works.**
 
 ## Advantages
 
