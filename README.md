@@ -84,4 +84,4 @@ There’s still room for improvement, but for its **primary purpose, it works pe
 * [Craig Vosburgh](https://www.linkedin.com/in/craigvosburgh) W0VOS - SatTrack app API specification
 * [Icons8](https://icons8.com/) - favicon
 
-[![Per Aspera Ad Astra](https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/Per_aspera_ad_astra%2C_1894.jpg/640px-Per_aspera_ad_astra%2C_1894.jpg)](https://simple.wikipedia.org/wiki/Per_aspera_ad_astra)
+[![Per Aspera Ad Astra](https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/Per_aspera_ad_astra%2C_1894.jpg/330px-Per_aspera_ad_astra%2C_1894.jpg)](https://simple.wikipedia.org/wiki/Per_aspera_ad_astra)
